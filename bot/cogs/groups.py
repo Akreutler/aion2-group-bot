@@ -107,7 +107,7 @@ class Groups(commands.Cog):
         min_ap="Minimum AP required to join with a character (optional).",
         min_gs="Minimum GS required to join with a character (optional).",
         mode="Expedition mode: Exploration or Conquest.",
-        content="Expedition/Sanctuary instance.",
+        content="Expedition, Sanctuary or Transcendence instance.",
         difficulty="Normal or Hard where applicable.",
         stage="Transcendence Stage 1–4.",
     )
