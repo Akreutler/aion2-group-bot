@@ -103,9 +103,7 @@ def _requirements_error(event, character, lang: str = "en") -> str | None:
             name=character["char_name"],
             current=have,
         )
-    if min_gs and (
-        character["item_level"] is None or character["item_level"] < min_gs
-    ):
+    if min_gs and (character["item_level"] is None or character["item_level"] < min_gs):
         current = character["item_level"]
         have = f"{current:,}" if current is not None else "unknown"
         return i18n.t(
