@@ -140,20 +140,14 @@ class PlayNCClient:
                     return unquote(str(character_id)), clean_name
         raise PlayNCError(f"Character {name!r} was not found on that server")
 
-    async def character(
+    async def character_by_id(
         self,
         *,
-        name: str,
+        character_id: str,
         region: str,
-        race_id: int,
         server_id: int,
+        race_id: int = 0,
     ) -> Character:
-        character_id, _ = await self.find_character(
-            name=name,
-            region=region,
-            race_id=race_id,
-            server_id=server_id,
-        )
         payload = await self._json(
             INFO_URL,
             params={
@@ -190,4 +184,25 @@ class PlayNCClient:
             title_name=profile.get("titleName"),
             profile_image=profile.get("profileImage"),
             region=region,
+        )
+
+    async def character(
+        self,
+        *,
+        name: str,
+        region: str,
+        race_id: int,
+        server_id: int,
+    ) -> Character:
+        character_id, _ = await self.find_character(
+            name=name,
+            region=region,
+            race_id=race_id,
+            server_id=server_id,
+        )
+        return await self.character_by_id(
+            character_id=character_id,
+            region=region,
+            server_id=server_id,
+            race_id=race_id,
         )
