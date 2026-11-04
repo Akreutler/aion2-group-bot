@@ -9,6 +9,13 @@ class EventCatalogError(ValueError):
     """Raised when an event's structured content is inconsistent."""
 
 
+def _canonical(value: str | None, choices: tuple[str, ...]) -> str | None:
+    if not value:
+        return None
+    wanted = value.strip().casefold()
+    return next((choice for choice in choices if choice.casefold() == wanted), value.strip())
+
+
 def content_choices(activity: str | None) -> tuple[str, ...]:
     if activity == "Expedition":
         return config.EXPEDITION_CONTENT
@@ -37,9 +44,11 @@ def normalize_event_details(
     difficulty: str | None,
 ) -> tuple[str | None, str | None, str | None]:
     """Validate and normalize structured event metadata."""
-    mode = mode.strip() if mode else None
-    content = content.strip() if content else None
-    difficulty = difficulty.strip() if difficulty else None
+    mode = _canonical(mode, config.EXPEDITION_MODES)
+    content = _canonical(
+        content, config.EXPEDITION_CONTENT + config.SANCTUARY_CONTENT
+    )
+    difficulty = _canonical(difficulty, config.DIFFICULTIES)
 
     if activity == "Expedition":
         if mode not in config.EXPEDITION_MODES:
