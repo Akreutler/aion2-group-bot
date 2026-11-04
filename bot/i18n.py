@@ -1,4 +1,4 @@
-"""Server-language resolution and string catalog (FR/EN).
+"""Server-language resolution and string catalog (FR/EN/ES).
 
 Pure helpers here take a language code ("fr"/"en"), never a DB row, so they
 stay trivially testable. The catalog is loaded from bot/locales/*.json.
@@ -10,7 +10,7 @@ from pathlib import Path
 
 log = logging.getLogger("kisk")
 
-SUPPORTED = ("en", "fr")
+SUPPORTED = ("en", "fr", "es")
 DEFAULT = "en"
 
 _LOCALES_DIR = Path(__file__).parent / "locales"

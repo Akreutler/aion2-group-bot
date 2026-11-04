@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from .. import i18n
 
-LANG_LABEL = {"fr": "Français", "en": "English"}
+LANG_LABEL = {"fr": "Français", "en": "English", "es": "Español"}
 
 
 def choice_to_lang(value: str) -> str | None:
@@ -36,6 +36,7 @@ class Settings(commands.Cog):
         choice=[
             app_commands.Choice(name="Français", value="fr"),
             app_commands.Choice(name="English", value="en"),
+            app_commands.Choice(name="Español", value="es"),
             app_commands.Choice(name="Auto (Discord server language)", value="auto"),
         ]
     )

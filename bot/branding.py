@@ -14,7 +14,7 @@ from . import config
 # Bump when the artwork changes: the asset URLs are otherwise stable, so a
 # changed image would keep serving from Discord's image cache until it expires.
 # The `?v=` below makes Discord treat a new version as a fresh URL and refetch.
-ASSET_VERSION = "3"
+ASSET_VERSION = "4"
 
 
 def asset_url(name: str) -> str:
@@ -29,6 +29,9 @@ RECRUIT_BANNER_URL = asset_url("banners/recruitment.png")
 # Event type -> banner slug. Legacy French labels (kept on old events) map to
 # the same art; anything else falls back to the neutral "other" banner.
 _ACTIVITY_SLUG = {
+    "Expedition": "dungeon",
+    "Sanctuary": "dungeon",
+    "Transcendence": "dungeon",
     "Dungeon": "dungeon",
     "Raid": "raid",
     "Battleground": "battleground",

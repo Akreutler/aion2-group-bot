@@ -86,6 +86,12 @@ async def publish_event(
     description: str | None,
     ping_role: "discord.Role | None" = None,
     groups: int = 1,
+    min_ap: int | None = None,
+    min_gs: int | None = None,
+    mode: str | None = None,
+    content: str | None = None,
+    difficulty: str | None = None,
+    stage: int | None = None,
 ) -> None:
     """Posts the event message in the configured (or current) channel.
 
@@ -121,6 +127,12 @@ async def publish_event(
         "starts_at": starts_at,
         "status": "open",
         "groups": groups,
+        "min_ap": min_ap,
+        "min_gs": min_gs,
+        "mode": mode,
+        "content": content,
+        "difficulty": difficulty,
+        "stage": stage,
     }
     await interaction.response.defer(ephemeral=True)
     try:

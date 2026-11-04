@@ -6,6 +6,7 @@ whenever a character isn't named explicitly.
 """
 
 import logging
+import time
 
 import discord
 from discord import app_commands
@@ -15,6 +16,7 @@ from .. import config, i18n
 from ..branding import brand
 from ..embeds import ROLE_EMOJI, ROLE_LABEL
 from ..logic import MAX_CHARACTERS, ROLES
+from ..plaync import PlayNCClient, PlayNCError, profile_url
 from ..utils.permissions import member_is_admin
 
 # The playable classes, taken from the emoji configuration so that adding one
@@ -61,6 +63,32 @@ async def character_autocomplete(interaction: discord.Interaction, current: str)
     return (await _character_choices(interaction, current))[:25]
 
 
+async def plaync_server_autocomplete(interaction: discord.Interaction, current: str):
+    """Official EU server/race choices from PLAYNC.
+
+    The value encodes region, race and server id so the slash command does not
+    have to trust a free-text server name.
+    """
+    client = getattr(interaction.client, "plaync", None)
+    if client is None:
+        return []
+    try:
+        servers = await client.servers("eu")
+    except PlayNCError:
+        return []
+    cur = current.casefold()
+    race_label = {1: "Elyos", 2: "Asmodian"}
+    choices = []
+    for server in servers:
+        label = f"{race_label.get(server.race_id, server.race_id)} · {server.name}"
+        if cur and cur not in label.casefold():
+            continue
+        choices.append(app_commands.Choice(name=label[:100], value=server.value))
+        if len(choices) == 25:
+            break
+    return choices
+
+
 async def deletable_autocomplete(interaction: discord.Interaction, current: str):
     """Same list, with "everything" as the first entry."""
     lang = await i18n.resolve_lang(interaction.client.db, interaction.guild)
@@ -100,11 +128,41 @@ def _roster_order(entry) -> tuple:
 
 
 def character_line(row, *, star: bool = True) -> str:
-    """E.g. "⭐ 💚 **Nami** (✨ Cleric)" — star, role icon, name, class."""
+    """One compact roster/profile line, enriched when PLAYNC data is linked."""
     emoji = config.CLASS_EMOJI.get(row["char_class"])
     char_class = f"{emoji} {row['char_class']}" if emoji else row["char_class"]
     prefix = "⭐ " if star and row["is_main"] else ""
-    return f"{prefix}{ROLE_EMOJI[row['role']]} **{row['char_name']}** ({char_class})"
+    line = f"{prefix}{ROLE_EMOJI[row['role']]} **{row['char_name']}** ({char_class})"
+    if row["combat_power"] is not None or row["item_level"] is not None:
+        bits = []
+        if row["combat_power"] is not None:
+            bits.append(f"{row['combat_power']:,} AP")
+        if row["item_level"] is not None:
+            bits.append(f"{row['item_level']:,} GS")
+        line += " · " + " · ".join(bits)
+    return line
+
+
+def character_detail_line(row, lang: str = "en") -> str:
+    """Detailed profile view for one character."""
+    line = character_line(row)
+    meta = []
+    if row["race_name"]:
+        meta.append(row["race_name"])
+    if row["server_name"]:
+        meta.append(row["server_name"])
+    if row["character_level"] is not None:
+        meta.append(f"Lv. {row['character_level']}")
+    if meta:
+        line += "\n  ↳ " + " · ".join(meta)
+    if row["legion_name"]:
+        line += f"\n  🛡️ {i18n.t('profile.legion', lang)}: **{row['legion_name']}**"
+    if row["title_name"]:
+        line += f"\n  🏅 *{row['title_name']}*"
+    if row["plaync_character_id"] and row["server_id"] and row["region"]:
+        url = profile_url(row["plaync_character_id"], row["server_id"], row["region"])
+        line += f"\n  🔗 [{i18n.t('profile.plaync_link', lang)}]({url})"
+    return line
 
 
 @app_commands.guild_only()
@@ -113,6 +171,8 @@ class Profile(commands.GroupCog, name="profile"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        if not hasattr(bot, "plaync"):
+            bot.plaync = PlayNCClient()
         super().__init__()
 
     async def cog_load(self):
@@ -122,62 +182,169 @@ class Profile(commands.GroupCog, name="profile"):
         self.prune_departed.cancel()
 
     @app_commands.command(
-        name="set", description="Register one of your characters (or update it)"
+        name="add",
+        description="Add or update a character from the official AION 2 profile",
     )
-    @app_commands.rename(char_class="class")
     @app_commands.describe(
-        name="The character's in-game name — an existing name updates it",
-        char_class="Its class",
+        name="Exact in-game character name",
+        server="Server and faction (pick a suggestion)",
         role="Its party role",
         main="Make it your main character (your first one always is)",
     )
+    @app_commands.autocomplete(server=plaync_server_autocomplete)
     @app_commands.choices(
-        char_class=CLASS_CHOICES,
         role=[
             app_commands.Choice(name="🛡️ Tank", value="tank"),
             app_commands.Choice(name="💚 Heal", value="heal"),
             app_commands.Choice(name="🗡️ DPS", value="dps"),
         ],
     )
-    async def set(
+    async def add(
         self,
         interaction: discord.Interaction,
         name: app_commands.Range[str, 1, 32],
-        char_class: app_commands.Choice[str],
+        server: str,
         role: app_commands.Choice[str],
         main: bool = False,
     ):
         lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
-        name, char_class = name.strip(), char_class.value
         characters = await self.bot.db.get_profiles(
             interaction.guild_id, interaction.user.id
         )
         known = {row["char_name"].lower() for row in characters}
-        if name.lower() not in known and len(characters) >= MAX_CHARACTERS:
+        if name.strip().lower() not in known and len(characters) >= MAX_CHARACTERS:
             await interaction.response.send_message(
                 i18n.t("profile.cap_reached", lang, max=MAX_CHARACTERS),
                 ephemeral=True,
             )
             return
 
-        await self.bot.db.add_character(
+        try:
+            region, race_raw, server_raw = server.split(":", 2)
+            race_id, server_id = int(race_raw), int(server_raw)
+        except (ValueError, AttributeError):
+            await interaction.response.send_message(
+                i18n.t("profile.pick_server", lang), ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            official = await self.bot.plaync.character(
+                name=name.strip(),
+                region=region,
+                race_id=race_id,
+                server_id=server_id,
+            )
+        except PlayNCError as exc:
+            await interaction.followup.send(
+                i18n.t("profile.lookup_failed", lang, error=exc),
+                ephemeral=True,
+            )
+            return
+
+        character_id = await self.bot.db.add_character(
             interaction.guild_id,
             interaction.user.id,
-            name,
-            char_class,
+            official.name,
+            official.char_class,
             role.value,
             make_main=main,
         )
-        was_first = not characters
-        detail = (
-            f"{ROLE_EMOJI[role.value]} **{name}** "
-            f"({char_class}, {ROLE_LABEL[role.value]})"
+        await self.bot.db.update_plaync_character(
+            character_id,
+            plaync_character_id=official.character_id,
+            region=official.region,
+            race_id=official.race_id,
+            race_name=official.race_name,
+            server_id=official.server_id,
+            server_name=official.server_name,
+            character_level=official.level,
+            combat_power=official.combat_power,
+            item_level=official.item_level,
+            title_name=official.title_name,
+            profile_image=official.profile_image,
+            updated_at=int(time.time()),
+            legion_name=official.legion_name,
         )
+
+        detail = (
+            f"{ROLE_EMOJI[role.value]} **{official.name}** "
+            f"({official.char_class}, {ROLE_LABEL[role.value]})\n"
+            f"{official.race_name} · {official.server_name} · Lv. {official.level}\n"
+            f"⚔️ {official.combat_power:,} AP · 🛡️ {official.item_level:,} GS"
+        )
+        was_first = not characters
         note = i18n.t(
             "profile.note_main" if main or was_first else "profile.note_alt", lang
         )
-        await interaction.response.send_message(
-            i18n.t("profile.saved", lang, detail=detail, note=note), ephemeral=True
+        await interaction.followup.send(
+            i18n.t("profile.plaync_saved", lang, detail=detail, note=note),
+            ephemeral=True,
+        )
+
+    @app_commands.command(
+        name="refresh", description="Refresh a linked character from PLAYNC"
+    )
+    @app_commands.describe(character="The linked character to refresh")
+    @app_commands.autocomplete(character=character_autocomplete)
+    async def refresh(self, interaction: discord.Interaction, character: str):
+        lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
+        row = await resolve_character(
+            self.bot.db, interaction.guild_id, interaction.user.id, character
+        )
+        if row is None:
+            await interaction.response.send_message(
+                i18n.t("profile.main_not_found", lang, character=character),
+                ephemeral=True,
+            )
+            return
+        if not row["plaync_character_id"] or not row["region"] or not row["server_id"]:
+            await interaction.response.send_message(
+                i18n.t("profile.refresh_unlinked", lang),
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            official = await self.bot.plaync.character_by_id(
+                character_id=row["plaync_character_id"],
+                region=row["region"],
+                server_id=row["server_id"],
+                race_id=row["race_id"] or 0,
+            )
+        except PlayNCError as exc:
+            await interaction.followup.send(
+                i18n.t("profile.refresh_failed", lang, error=exc), ephemeral=True
+            )
+            return
+
+        await self.bot.db.update_plaync_character(
+            row["id"],
+            plaync_character_id=official.character_id,
+            region=official.region,
+            race_id=official.race_id,
+            race_name=official.race_name,
+            server_id=official.server_id,
+            server_name=official.server_name,
+            character_level=official.level,
+            combat_power=official.combat_power,
+            item_level=official.item_level,
+            title_name=official.title_name,
+            profile_image=official.profile_image,
+            updated_at=int(time.time()),
+            legion_name=official.legion_name,
+        )
+        await interaction.followup.send(
+            i18n.t(
+                "profile.refresh_success",
+                lang,
+                name=official.name,
+                ap=f"{official.combat_power:,}",
+                gs=f"{official.item_level:,}",
+            ),
+            ephemeral=True,
         )
 
     @app_commands.command(
@@ -228,7 +395,9 @@ class Profile(commands.GroupCog, name="profile"):
         )
         embed = discord.Embed(
             title=title,
-            description="\n".join(character_line(row) for row in characters),
+            description="\n\n".join(
+                character_detail_line(row, lang) for row in characters
+            ),
             colour=discord.Colour.blurple(),
         )
         brand(embed)

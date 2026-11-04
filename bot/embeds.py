@@ -4,6 +4,7 @@ import discord
 
 from . import config, i18n
 from .branding import activity_banner_url, activity_icon_url, brand
+from .event_catalog import event_subtitle
 from .logic import (
     COMPO_STANDARD,
     ROLES,
@@ -20,7 +21,8 @@ def _with_legacy_labels(mapping: dict) -> dict:
     """Events created by earlier versions carry French activity labels."""
     return {
         **mapping,
-        "Donjon": mapping["Dungeon"],
+        "Dungeon": mapping["Expedition"],
+        "Donjon": mapping["Expedition"],
         "Abysses": mapping["Abyss"],
         "Autre": mapping["Other"],
     }
@@ -81,11 +83,20 @@ def _class_suffix(signup, classes: dict, *, role_shown: bool = False) -> str:
         icon = ""
     if icon:
         icon += " "
+    stats = []
+    combat_power = _row_get(signup, "combat_power")
+    item_level = _row_get(signup, "item_level")
+    if combat_power is not None:
+        stats.append(f"{combat_power / 1000:.1f}k AP")
+    if item_level is not None:
+        stats.append(f"{item_level:,} GS")
+    stats_suffix = f" · {' · '.join(stats)}" if stats else ""
+
     if name and char_class:
-        return f" — {icon}*{name} ({char_class})*"
+        return f" — {icon}*{name} ({char_class})*{stats_suffix}"
     if name:
-        return f" — *{name}*"
-    return f" — {icon}*{char_class}*" if char_class else ""
+        return f" — *{name}*{stats_suffix}"
+    return f" — {icon}*{char_class}*{stats_suffix}" if char_class else ""
 
 
 def _names(members: list, classes: dict) -> str:
@@ -130,10 +141,21 @@ def build_event_embed(
 
     # The role fields below already show the layout, so no "Setup" line —
     # just the event type in clear text, with the schedule when there is one.
-    header = f"**{event['activity']}**"
+    header = f"**{event_subtitle(event)}**"
     if event["starts_at"]:
         header += f" • 🕘 <t:{event['starts_at']}:F> (<t:{event['starts_at']}:R>)"
     lines = [header]
+    requirements = []
+    min_ap = _row_get(event, "min_ap")
+    min_gs = _row_get(event, "min_gs")
+    if min_ap:
+        requirements.append(f"{min_ap:,} AP")
+    if min_gs:
+        requirements.append(f"{min_gs:,} GS")
+    if requirements:
+        lines.append(
+            i18n.t("event.requirements", lang, values=" · ".join(requirements))
+        )
     if event["description"]:
         lines.append(event["description"])
 
@@ -270,7 +292,8 @@ def build_rsvp_embed(
     when = f" • 🕘 <t:{event['starts_at']}:R>" if event["starts_at"] else ""
     embed = discord.Embed(
         title=f"{emoji} " + i18n.t("rsvp.title", lang, title=event["title"]),
-        description=f"**{event['activity']}**{when}\n" + i18n.t("rsvp.body_hint", lang),
+        description=f"**{event_subtitle(event)}**{when}\n"
+        + i18n.t("rsvp.body_hint", lang),
         colour=discord.Colour.blurple(),
     )
     brand(embed)

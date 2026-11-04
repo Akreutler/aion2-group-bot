@@ -53,13 +53,36 @@ Like the in-game kisk, it's the **rally point you drop before the fight.**
   * description
 * Supported activity types:
 
-  * 🏰 Dungeon
+  * 🏰 Expedition
+  * 🔥 Sanctuary
+  * 🔮 Transcendence
   * 🐉 Raid
   * 🚩 Battleground
   * ⚔️ PvP
   * 🌀 Rift
   * 🌌 Abyss
   * 🎲 Other
+
+### 🔮 Structured PvE content
+
+Kisk models AION 2 PvE content explicitly instead of forcing the instance name
+into the event title.
+
+**Expedition**
+- Exploration: Krao Cave, Draupnir, Uruguru Canyon, Vakron Sky Island,
+  Fire Temple and Ferocious Horn Den. No difficulty.
+- Conquest: the same six instances, with Normal / Hard difficulty.
+
+**Sanctuary**
+- Abyssal Forge: Ludra, with Normal / Hard difficulty.
+
+**Transcendence**
+- Deus Research Base
+- Shattered Arkanis
+- Stage 1 / 2 / 3 / 4
+
+The selected instance becomes the event title automatically unless a custom
+title is supplied.
 
 ### 👥 Party compositions
 
@@ -250,12 +273,38 @@ The event creator or a moderator can cancel an event.
 
 Everyone who signed up is notified automatically.
 
-### 👤 Player profiles
+## 🔎 Official PLAYNC profiles
+
+Character registration is backed by AION 2's public PLAYNC character pages.
+Use `/profile add` with the character name plus the server/faction suggestion.
+Kisk retrieves the class, level, faction, server, legion, AP and GS instead of
+asking players to type them by hand.
+
+Linked character data can be refreshed with:
+
+```
+/profile refresh
+```
+
+Kisk also refreshes stale linked profiles automatically when a player signs up
+for an event (default: after 60 minutes; configure with
+`PLAYNC_REFRESH_MINUTES`).
+
+Event organisers can optionally require a minimum AP and/or GS:
+
+```
+/event title: Progression Raid type: Raid comp: Party of 10 min_ap: 130000 min_gs: 2400
+```
+
+The requirement is checked against the specific character selected for that
+event.
+
+## 👤 Player profiles
 
 Players can register their characters with:
 
 ```text
-/profile set name: Kratos class: Templar role: Tank
+/profile add name: Kratos server: Elyos · Kaisinel role: Tank
 ```
 
 Each player can register **up to 10 characters** — a main and as many alts as
@@ -268,7 +317,7 @@ default in party lists and on the roster. To change it:
 /profile main character: Loki
 ```
 
-Re-running `/profile set` with a name that already exists updates that
+Re-running `/profile add` with a name that already exists updates that
 character instead of creating a twin, so fixing a class or a role is one
 command.
 
@@ -648,7 +697,7 @@ Open the generated installation URL and invite Kisk to your server.
 Clone the repository:
 
 ```bash
-git clone https://github.com/NaxosOne/aion2-group-bot.git
+git clone https://github.com/Akreutler/aion2-group-bot.git
 cd aion2-group-bot
 ```
 
@@ -763,7 +812,7 @@ posted. Pinging `@everyone` is reserved to moderators.
 ## Profiles
 
 ```text
-/profile set name: Kratos class: Templar role: Tank [main: True]
+/profile add name: Kratos server: Elyos · Kaisinel role: Tank [main: True]
 /profile main character: Loki                        → change your default character
 
 /profile show [member]
@@ -822,7 +871,7 @@ tracked yet: run `/panel` once to register it.
 ## Language
 
 ```text
-/language choice: Français     → set the server language: Français / English / Auto (moderators)
+/language choice: Français     → set the server language: Français / English / Español / Auto (moderators)
 ```
 
 ## Roles & permissions
@@ -1001,10 +1050,10 @@ the roster and the character picker at once.
 commented-out line away: uncomment it in `CLASS_EMOJI` the day the class
 launches and it appears everywhere on its own.
 
-`/profile set` offers exactly these classes and accepts nothing else, so a
-typo can't slip into the roster. Characters registered under an older version,
-when the field was free text, keep working — they simply show no class icon.
-Re-running `/profile set` with the same character name puts them right.
+`/profile add` no longer asks the player to choose a class. Kisk gets the
+class from the official PLAYNC profile, so class typos cannot enter through the
+normal registration flow. Legacy manually-created characters remain readable.
+Re-running `/profile add` with the same character name updates the linked data.
 
 ---
 
@@ -1029,3 +1078,9 @@ Kisk should help a legion coordinate without turning the game into a second job.
 # 📄 License
 
 See [LICENSE](LICENSE).
+
+
+## 🌍 Languages
+
+Kisk supports English, French and Spanish. Server administrators can choose
+with `/language`; Auto follows the Discord server locale when supported.

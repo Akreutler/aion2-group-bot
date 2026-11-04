@@ -22,6 +22,12 @@ from ..actions import publish_event, register_absence
 from ..branding import BANNER_URL, brand
 from ..embeds import build_event_embed
 from ..errors import ModalErrorMixin, ViewErrorMixin
+from ..event_catalog import (
+    EventCatalogError,
+    event_display_name,
+    normalize_event_details,
+    normalize_stage,
+)
 from ..logic import COMPO_OPEN, COMPO_STANDARD
 from ..utils.permissions import member_is_admin
 from ..utils.time_parse import ParseError, parse_when
@@ -166,13 +172,22 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         self.setup = setup
         self.lang = lang
 
+        structured = activity in {"Expedition", "Sanctuary", "Transcendence"}
         self.event_title = discord.ui.TextInput(
-            label=i18n.t("panel.field_title", lang), max_length=100
+            label=i18n.t("panel.field_title", lang),
+            max_length=100,
+            required=not structured,
         )
         self.add_item(self.event_title)
 
         # "Other" is the one type members can name themselves.
         self.custom_type = None
+        self.mode = None
+        self.content = None
+        self.difficulty = None
+        self.stage = None
+        self.description = None
+
         if activity == "Other":
             self.custom_type = discord.ui.TextInput(
                 label=i18n.t("panel.field_type_name", lang),
@@ -182,6 +197,53 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
             )
             self.add_item(self.custom_type)
 
+        if activity == "Expedition":
+            self.mode = discord.ui.TextInput(
+                label="Mode: Exploration / Conquest",
+                placeholder="Exploration or Conquest",
+                max_length=20,
+            )
+            self.content = discord.ui.TextInput(
+                label="Expedition",
+                placeholder="Fire Temple, Krao Cave...",
+                max_length=50,
+            )
+            self.difficulty = discord.ui.TextInput(
+                label="Difficulty (Conquest only)",
+                placeholder="Normal / Hard",
+                required=False,
+                max_length=10,
+            )
+            self.add_item(self.mode)
+            self.add_item(self.content)
+            self.add_item(self.difficulty)
+        elif activity == "Sanctuary":
+            self.content = discord.ui.TextInput(
+                label="Sanctuary",
+                placeholder="Abyssal Forge: Ludra",
+                max_length=50,
+            )
+            self.difficulty = discord.ui.TextInput(
+                label="Difficulty",
+                placeholder="Normal / Hard",
+                max_length=10,
+            )
+            self.add_item(self.content)
+            self.add_item(self.difficulty)
+        elif activity == "Transcendence":
+            self.content = discord.ui.TextInput(
+                label="Transcendence dungeon",
+                placeholder="Deus Research Base / Shattered Arkanis",
+                max_length=50,
+            )
+            self.stage = discord.ui.TextInput(
+                label="Stage",
+                placeholder="1 / 2 / 3 / 4",
+                max_length=1,
+            )
+            self.add_item(self.content)
+            self.add_item(self.stage)
+
         self.when = discord.ui.TextInput(
             label=i18n.t("panel.field_when", lang),
             placeholder=i18n.t("panel.field_when_ph", lang),
@@ -190,13 +252,14 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         )
         self.add_item(self.when)
 
-        self.description = discord.ui.TextInput(
-            label=i18n.t("panel.field_description", lang),
-            style=discord.TextStyle.paragraph,
-            required=False,
-            max_length=500,
-        )
-        self.add_item(self.description)
+        if not structured:
+            self.description = discord.ui.TextInput(
+                label=i18n.t("panel.field_description", lang),
+                style=discord.TextStyle.paragraph,
+                required=False,
+                max_length=500,
+            )
+            self.add_item(self.description)
 
     async def on_submit(self, interaction: discord.Interaction):
         starts_at = None
@@ -215,15 +278,53 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         if self.custom_type is not None and self.custom_type.value.strip():
             activity = self.custom_type.value.strip()
 
+        mode = self.mode.value.strip() if self.mode is not None else None
+        content = self.content.value.strip() if self.content is not None else None
+        difficulty = (
+            self.difficulty.value.strip() if self.difficulty is not None else None
+        )
+        stage = None
+        if self.stage is not None and self.stage.value.strip():
+            try:
+                stage = int(self.stage.value.strip())
+            except ValueError:
+                await interaction.response.send_message(
+                    "❌ Stage must be 1, 2, 3 or 4.", ephemeral=True
+                )
+                return
+        try:
+            mode, content, difficulty = normalize_event_details(
+                activity=activity,
+                mode=mode,
+                content=content,
+                difficulty=difficulty,
+            )
+            stage = normalize_stage(activity, stage)
+        except EventCatalogError as err:
+            await interaction.response.send_message(f"❌ {err}", ephemeral=True)
+            return
+
         comp_mode, size = SETUPS[self.setup]
         await publish_event(
             interaction,
-            title=self.event_title.value.strip(),
+            title=event_display_name(
+                title=self.event_title.value.strip() or None,
+                activity=activity,
+                content=content,
+            ),
             activity=activity,
             comp_mode=comp_mode,
             size=size,
             starts_at=starts_at,
-            description=self.description.value.strip() or None,
+            description=(
+                self.description.value.strip() or None
+                if self.description is not None
+                else None
+            ),
+            mode=mode,
+            content=content,
+            difficulty=difficulty,
+            stage=stage,
         )
 
 

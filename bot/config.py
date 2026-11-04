@@ -27,6 +27,10 @@ REMINDER_MINUTES = int(os.getenv("REMINDER_MINUTES") or 15)
 # How many minutes before start the "are you coming?" RSVP prompt is posted.
 RSVP_MINUTES = int(os.getenv("RSVP_MINUTES") or 60)
 
+# Refresh linked PLAYNC character data on signup when older than this.
+# Set to 0 to disable automatic refreshes.
+PLAYNC_REFRESH_MINUTES = int(os.getenv("PLAYNC_REFRESH_MINUTES") or 60)
+
 # How many hours after an event is over its message is deleted from the channel,
 # so past events don't pile up. Set to 0 to disable the cleanup entirely.
 EVENT_CLEANUP_HOURS = int(os.getenv("EVENT_CLEANUP_HOURS") or 24)
@@ -49,7 +53,9 @@ EMOJI_DPS = _emoji(os.getenv("EMOJI_DPS"), "🗡️", "EMOJI_DPS")
 # shows slash-command choice lists as plain text, and prints the bot's
 # presence literally, raw <:name:id> code and all.
 DEFAULT_EMOJI_ACTIVITY = {
-    "Dungeon": "🏰",
+    "Expedition": "🏰",
+    "Sanctuary": "🔥",
+    "Transcendence": "🔮",
     "Raid": "🐉",
     "Battleground": "🚩",
     "PvP": "⚔️",
@@ -69,6 +75,25 @@ EMOJI_ACTIVITY = {
 # The event types offered by menus and choices, in display order. Single source
 # of truth for the panel's event dropdown and the LFG activity picker.
 ACTIVITIES = tuple(DEFAULT_EMOJI_ACTIVITY)
+
+# Structured PvE content. Exploration and Conquest use the same Expedition
+# instances; only Conquest has a difficulty selector.
+EXPEDITION_CONTENT = (
+    "Krao Cave",
+    "Draupnir",
+    "Uruguru Canyon",
+    "Vakron Sky Island",
+    "Fire Temple",
+    "Ferocious Horn Den",
+)
+EXPEDITION_MODES = ("Exploration", "Conquest")
+DIFFICULTIES = ("Normal", "Hard")
+SANCTUARY_CONTENT = ("Abyssal Forge: Ludra",)
+TRANSCENDENCE_CONTENT = (
+    "Deus Research Base",
+    "Shattered Arkanis",
+)
+TRANSCENDENCE_STAGES = (1, 2, 3, 4)
 
 
 # Aion 2 class emojis, overridable the same way (EMOJI_GLADIATOR, EMOJI_TEMPLAR
@@ -103,8 +128,10 @@ DB_PATH = os.getenv("DB_PATH", "data/bot.db")
 # Where the embed artwork (logo, banners) is served from. Defaults to this
 # repository's raw assets on GitHub; override it to point at any public host.
 # Images only render if the assets are publicly reachable at this base.
-ASSET_BASE_URL = os.getenv(
-    "ASSET_BASE_URL",
-    "https://raw.githubusercontent.com/NaxosOne/aion2-group-bot"
-    "/claude/discord-bot-aion-groups-3bnutq/assets",
+ASSET_BASE_URL = (
+    os.getenv("ASSET_BASE_URL")
+    or (
+        "https://raw.githubusercontent.com/Akreutler/aion2-group-bot"
+        "/claude/discord-bot-aion-groups-3bnutq/assets"
+    )
 ).rstrip("/")

@@ -35,7 +35,13 @@ CREATE TABLE IF NOT EXISTS events (
     rsvp_prompt_id INTEGER,                        -- message id of that prompt
     voice_created INTEGER NOT NULL DEFAULT 0,      -- temp voice channel claimed
     voice_channel_id INTEGER,                      -- its channel, NULL once cleaned up
-    groups        INTEGER NOT NULL DEFAULT 1       -- display groups; 1 = single party
+    groups        INTEGER NOT NULL DEFAULT 1,      -- display groups; 1 = single party
+    min_ap        INTEGER,
+    min_gs        INTEGER,
+    mode          TEXT,
+    content       TEXT,
+    difficulty    TEXT,
+    stage         INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS signups (
@@ -59,6 +65,19 @@ CREATE TABLE IF NOT EXISTS profiles (
     char_class TEXT    NOT NULL,
     role       TEXT    NOT NULL,                  -- 'tank', 'heal' or 'dps'
     is_main    INTEGER NOT NULL DEFAULT 0,
+    plaync_character_id TEXT,
+    region      TEXT,
+    race_id     INTEGER,
+    race_name   TEXT,
+    server_id   INTEGER,
+    server_name TEXT,
+    character_level INTEGER,
+    combat_power INTEGER,
+    item_level   INTEGER,
+    title_name   TEXT,
+    legion_name  TEXT,
+    profile_image TEXT,
+    plaync_updated_at INTEGER,
     UNIQUE (guild_id, user_id, char_name)
 );
 
@@ -157,7 +176,13 @@ CREATE TABLE IF NOT EXISTS recurrences (
     ping_role_id  INTEGER,
     next_at       INTEGER NOT NULL,               -- next occurrence (UTC)
     active        INTEGER NOT NULL DEFAULT 1,
-    groups        INTEGER NOT NULL DEFAULT 1       -- siege display groups; 1 = single
+    groups        INTEGER NOT NULL DEFAULT 1,      -- siege display groups; 1 = single
+    min_ap        INTEGER,
+    min_gs        INTEGER,
+    mode          TEXT,
+    content       TEXT,
+    difficulty    TEXT,
+    stage         INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -211,7 +236,7 @@ class Database(ProfilesMixin, BoardsMixin):
                 "absence_channel_id": "INTEGER",
                 "member_role_id": "INTEGER",  # role that means "validated member"
                 "rsvp_channel_id": "INTEGER",  # where RSVP prompts are posted
-                "language": "TEXT",  # 'fr' | 'en' | NULL = auto
+                "language": "TEXT",  # 'fr' | 'en' | 'es' | NULL = auto
                 "panel_channel_id": "INTEGER",  # quick-actions panel location
                 "panel_message_id": "INTEGER",  # so /panel refreshes it in place
                 "admin_role_id": "INTEGER",  # role treated as a Kisk admin
@@ -221,6 +246,21 @@ class Database(ProfilesMixin, BoardsMixin):
                 "dashboard_channel_id": "INTEGER",  # legion dashboard location
                 "dashboard_message_id": "INTEGER",  # auto-refreshed in place
                 "recruit_channel_id": "INTEGER",  # officers' recruitment review channel
+            },
+            "profiles": {
+                "plaync_character_id": "TEXT",
+                "region": "TEXT",
+                "race_id": "INTEGER",
+                "race_name": "TEXT",
+                "server_id": "INTEGER",
+                "server_name": "TEXT",
+                "character_level": "INTEGER",
+                "combat_power": "INTEGER",
+                "item_level": "INTEGER",
+                "title_name": "TEXT",
+                "legion_name": "TEXT",
+                "profile_image": "TEXT",
+                "plaync_updated_at": "INTEGER",
             },
             "signups": {
                 "character_id": "INTEGER",  # which character the member brings
@@ -232,9 +272,21 @@ class Database(ProfilesMixin, BoardsMixin):
                 "voice_created": "INTEGER NOT NULL DEFAULT 0",
                 "voice_channel_id": "INTEGER",
                 "groups": "INTEGER NOT NULL DEFAULT 1",
+                "min_ap": "INTEGER",
+                "min_gs": "INTEGER",
+                "mode": "TEXT",
+                "content": "TEXT",
+                "difficulty": "TEXT",
+                "stage": "INTEGER",
             },
             "recurrences": {
                 "groups": "INTEGER NOT NULL DEFAULT 1",  # siege split, threaded
+                "min_ap": "INTEGER",
+                "min_gs": "INTEGER",
+                "mode": "TEXT",
+                "content": "TEXT",
+                "difficulty": "TEXT",
+                "stage": "INTEGER",
             },
         }
         for table, columns in added.items():
