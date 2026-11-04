@@ -290,3 +290,16 @@ def test_profile_user_ids_lists_each_member_once_per_guild(tmp_path):
         return here, there, empty
 
     assert run(go) == ([42, 99], [77], [])
+
+
+def test_same_user_is_isolated_between_guilds(tmp_path):
+    async def go():
+        db = await _fresh(tmp_path)
+        await db.add_character(1, 42, "Meilink", "Gladiator", "dps")
+        await db.add_character(2, 42, "Ramzon", "Ranger", "dps")
+        guild_one = [r["char_name"] for r in await db.get_profiles(1, 42)]
+        guild_two = [r["char_name"] for r in await db.get_profiles(2, 42)]
+        await db.close()
+        return guild_one, guild_two
+
+    assert run(go) == (["Meilink"], ["Ramzon"])
