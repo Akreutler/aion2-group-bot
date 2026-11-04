@@ -91,6 +91,7 @@ async def publish_event(
     mode: str | None = None,
     content: str | None = None,
     difficulty: str | None = None,
+    stage: int | None = None,
 ) -> None:
     """Posts the event message in the configured (or current) channel.
 
@@ -131,6 +132,7 @@ async def publish_event(
         "mode": mode,
         "content": content,
         "difficulty": difficulty,
+        "stage": stage,
     }
     await interaction.response.defer(ephemeral=True)
     try:
