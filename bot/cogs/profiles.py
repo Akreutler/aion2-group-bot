@@ -186,7 +186,8 @@ class Profile(commands.GroupCog, name="profile"):
         self.prune_departed.cancel()
 
     @app_commands.command(
-        name="add", description="Add or update a character from the official AION 2 profile"
+        name="add",
+        description="Add or update a character from the official AION 2 profile",
     )
     @app_commands.describe(
         name="Exact in-game character name",
@@ -282,7 +283,8 @@ class Profile(commands.GroupCog, name="profile"):
             "profile.note_main" if main or was_first else "profile.note_alt", lang
         )
         await interaction.followup.send(
-            i18n.t("profile.plaync_saved", lang, detail=detail, note=note), ephemeral=True
+            i18n.t("profile.plaync_saved", lang, detail=detail, note=note),
+            ephemeral=True,
         )
 
     @app_commands.command(
