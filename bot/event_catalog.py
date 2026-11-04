@@ -96,6 +96,17 @@ def normalize_event_details(
     return None, None, None
 
 
+def normalize_stage(activity: str, stage: int | None) -> int | None:
+    """Validate the stage field for Transcendence."""
+    if activity == "Transcendence":
+        if stage not in config.TRANSCENDENCE_STAGES:
+            raise EventCatalogError("Transcendence requires Stage 1, 2, 3 or 4.")
+        return stage
+    if stage is not None:
+        raise EventCatalogError("Stage only applies to Transcendence.")
+    return None
+
+
 def event_display_name(
     *,
     title: str | None,
@@ -124,6 +135,10 @@ def event_subtitle(event) -> str:
         difficulty = event["difficulty"]
     except (KeyError, IndexError):
         difficulty = None
+    try:
+        stage = event["stage"]
+    except (KeyError, IndexError):
+        stage = None
 
     bits = [event["activity"]]
     if mode:
@@ -132,4 +147,6 @@ def event_subtitle(event) -> str:
         bits.append(content)
     if difficulty:
         bits.append(difficulty)
+    if stage:
+        bits.append(f"Stage {stage}")
     return " · ".join(bits)
