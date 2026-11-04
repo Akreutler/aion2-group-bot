@@ -12,7 +12,7 @@ to most robust.
 Free and instant: `python -m bot.main` and the bot is online... as long as
 the PC is on. Great for developing and testing, not for the guild.
 
-## Option 1 — Railway (simplest, ~$2-3/month)
+## Option 1 — Railway (simplest)
 
 [Railway](https://railway.com) deploys straight from GitHub: connect the
 repo, it detects the `Dockerfile`, and every `git push` redeploys.
@@ -29,15 +29,19 @@ repo, it detects the `Dockerfile`, and every `git push` redeploys.
 4. Add a **Volume** mounted on `/app/data` so the SQLite database survives
    redeployments.
 
-The trial plan gives a small credit; after that a light bot costs about
-$2-3/month. This is the "it just works" option.
+Railway currently offers a Free plan for small projects and a Hobby plan with
+a $5 minimum monthly usage commitment. Free/Trial volumes are limited to
+0.5 GB; Hobby includes up to 5 GB of volume storage. For a public bot where
+uptime matters, Hobby is the safer default. Check Railway's current pricing
+before deploying because plan limits can change.
 
 ## Option 2 — Oracle Cloud Free Tier (actually free, more technical)
 
-Oracle offers an "Always Free" ARM virtual machine (up to 4 CPUs / 24 GB
-RAM) — plenty to run this bot for $0. The trade-offs: account creation
-requires a credit card (not charged), and it's a real Linux server to
-administer.
+Oracle's Always Free tier currently includes Ampere A1 compute within a
+monthly allowance equivalent to up to 2 OCPUs and 12 GB of memory, plus
+Always Free block storage. That is more than enough for this bot for $0.
+There is no SLA or paid support on the free tier, capacity can be unavailable,
+and it is a real Linux server you must administer.
 
 1. Create an account at <https://www.oracle.com/cloud/free/> and launch an
    **Ampere A1** instance (Ubuntu).
