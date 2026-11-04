@@ -82,6 +82,8 @@ class Groups(commands.Cog):
         ping="Optional: a role to notify (e.g. @Aion2). @everyone is moderators only.",
         repeat="Repeat this event automatically (moderators). Needs a time.",
         groups="Split into this many groups for a siege (Open parties only).",
+        min_ap="Minimum AP required to join with a character (optional).",
+        min_gs="Minimum GS required to join with a character (optional).",
     )
     @app_commands.choices(
         repeat=[
@@ -119,6 +121,8 @@ class Groups(commands.Cog):
         ping: discord.Role | None = None,
         repeat: app_commands.Choice[str] | None = None,
         groups: app_commands.Range[int, 2, 8] | None = None,
+        min_ap: app_commands.Range[int, 1, 9999999] | None = None,
+        min_gs: app_commands.Range[int, 1, 99999] | None = None,
     ):
         lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
         starts_at = None
@@ -164,6 +168,8 @@ class Groups(commands.Cog):
                 description=description,
                 ping=ping,
                 groups=group_count,
+                min_ap=min_ap,
+                min_gs=min_gs,
             )
             return
 
@@ -177,6 +183,8 @@ class Groups(commands.Cog):
             description=description,
             ping_role=ping,
             groups=group_count,
+            min_ap=min_ap,
+            min_gs=min_gs,
         )
 
     async def _create_recurrence(
@@ -192,6 +200,8 @@ class Groups(commands.Cog):
         description,
         ping,
         groups=1,
+        min_ap=None,
+        min_gs=None,
     ):
         """Stores a weekly recurrence; the loop posts each instance in advance."""
         if not await member_is_moderator(self.bot.db, interaction.user):
@@ -226,6 +236,8 @@ class Groups(commands.Cog):
             ping_role_id=ping.id if ping else None,
             next_at=starts_at,
             groups=groups,
+            min_ap=min_ap,
+            min_gs=min_gs,
         )
         await interaction.response.send_message(
             i18n.t("recurring.created", lang, title=title, when=f"<t:{starts_at}:F>"),
@@ -640,6 +652,8 @@ class Groups(commands.Cog):
             "starts_at": occurrence,
             "status": "open",
             "groups": rec["groups"],
+            "min_ap": rec["min_ap"],
+            "min_gs": rec["min_gs"],
         }
         await post_event(self.bot, channel, event, lang, ping_role)
 
