@@ -16,6 +16,7 @@ from ..event_catalog import (
     EventCatalogError,
     content_choices,
     event_display_name,
+    event_subtitle,
     normalize_event_details,
 )
 from ..logic import COMPO_OPEN, COMPO_STANDARD, assign
@@ -391,7 +392,7 @@ class Groups(commands.Cog):
                 lang,
                 title=ev["title"],
                 link=link,
-                activity=ev["activity"],
+                activity=event_subtitle(ev),
                 when=when,
                 signed=len(party),
                 size=ev["size"],
