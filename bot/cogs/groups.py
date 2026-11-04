@@ -676,18 +676,10 @@ class Groups(commands.Cog):
     @tasks.loop(minutes=5)
     @resilient_tick
     async def status(self):
-        ev = await self.bot.db.next_upcoming_event(int(time.time()))
-        if ev:
-            # Unicode only: the presence is plain text to Discord, so a
-            # custom emoji would read as "<:rift:154256...> Rift — 18:00".
-            emoji = PRESENCE_ACTIVITY_EMOJI.get(
-                ev["activity"], config.DEFAULT_EMOJI_ACTIVITY["Other"]
-            )
-            text = f"{emoji} {ev['title']} — {self._short_when(ev['starts_at'])}"
-        else:
-            text = "/event to start a group"
+        """Global bot presence must never expose one guild's event to others."""
+        text = "/event • /profile add"
         try:
-            await self.bot.change_presence(activity=discord.Game(name=text[:100]))
+            await self.bot.change_presence(activity=discord.Game(name=text))
         except discord.HTTPException:
             pass
 
