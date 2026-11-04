@@ -110,5 +110,5 @@ DB_PATH = os.getenv("DB_PATH", "data/bot.db")
 ASSET_BASE_URL = os.getenv(
     "ASSET_BASE_URL",
     "https://raw.githubusercontent.com/Akreutler/aion2-group-bot"
-    "/feature/plaync-character-api/assets",
+    "/claude/discord-bot-aion-groups-3bnutq/assets",
 ).rstrip("/")
