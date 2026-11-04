@@ -20,7 +20,9 @@ EVENT = {
 }
 
 
-def signup(user_id, role, char_name=None, char_class=None):
+def signup(
+    user_id, role, char_name=None, char_class=None, combat_power=None, item_level=None
+):
     return {
         "user_id": user_id,
         "role": role,
@@ -28,6 +30,8 @@ def signup(user_id, role, char_name=None, char_class=None):
         "joined_at": float(user_id),
         "char_name": char_name,
         "char_class": char_class,
+        "combat_power": combat_power,
+        "item_level": item_level,
     }
 
 
@@ -196,3 +200,20 @@ def test_rsvp_embed_follows_language():
     assert "Tu viens ?" in embed.title
     assert any("Présents (0)" in f.name for f in embed.fields)
     assert any("Sans réponse (0)" in f.name for f in embed.fields)
+
+
+def test_event_requirements_are_visible():
+    event = {**EVENT, "min_ap": 120000, "min_gs": 2400}
+    embed = build_event_embed(event, [])
+    assert "120,000 AP" in embed.description
+    assert "2,400 GS" in embed.description
+
+
+def test_character_ap_and_gs_are_visible_in_party():
+    row = signup(
+        10, "dps", "Meilink", "Gladiator", combat_power=133715, item_level=2449
+    )
+    embed = build_event_embed(EVENT, [row])
+    text = party_text(embed)
+    assert "133.7k AP" in text
+    assert "2,449 GS" in text
