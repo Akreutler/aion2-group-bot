@@ -13,7 +13,10 @@ def _canonical(value: str | None, choices: tuple[str, ...]) -> str | None:
     if not value:
         return None
     wanted = value.strip().casefold()
-    return next((choice for choice in choices if choice.casefold() == wanted), value.strip())
+    return next(
+        (choice for choice in choices if choice.casefold() == wanted),
+        value.strip(),
+    )
 
 
 def content_choices(activity: str | None) -> tuple[str, ...]:
