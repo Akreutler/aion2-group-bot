@@ -146,5 +146,17 @@
   "channels.where_used": "donde se use el comando",
   "channels.voice_on": "🔊 Canales de voz temporales activos bajo {category}.",
   "ics.here": "📅 Aquí tienes los próximos eventos para importar en tu calendario.",
-  "ics.none": "No hay eventos programados para exportar."
+  "ics.none": "No hay eventos programados para exportar.",
+  "event.requirements": "🔒 **Requisitos:** {values}",
+  "profile.plaync_saved": "✅ Añadido desde PLAYNC\\n{detail}\\n{note}",
+  "profile.pick_server": "Selecciona un servidor de la lista de autocompletado.",
+  "profile.lookup_failed": "❌ No he podido encontrar ese personaje en PLAYNC: {error}",
+  "profile.refresh_unlinked": "Este personaje todavía no está vinculado a PLAYNC. Usa primero `/profile add`.",
+  "profile.refresh_failed": "❌ No he podido actualizar desde PLAYNC: {error}",
+  "profile.refresh_success": "✅ **{name}** actualizado · {ap} AP · {gs} GS",
+  "profile.legion": "Legión",
+  "profile.plaync_link": "Perfil PLAYNC",
+  "signup.require_linked_stats": "Este evento requiere un personaje vinculado con datos de AP/GS.",
+  "signup.min_ap": "AP mínimo: {required}. **{name}** tiene {current} AP.",
+  "signup.min_gs": "GS mínimo: {required}. **{name}** tiene {current} GS."
 }
