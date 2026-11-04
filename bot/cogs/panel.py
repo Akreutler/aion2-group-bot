@@ -26,6 +26,7 @@ from ..event_catalog import (
     EventCatalogError,
     event_display_name,
     normalize_event_details,
+    normalize_stage,
 )
 from ..logic import COMPO_OPEN, COMPO_STANDARD
 from ..utils.permissions import member_is_admin
@@ -171,7 +172,7 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         self.setup = setup
         self.lang = lang
 
-        structured = activity in {"Expedition", "Sanctuary"}
+        structured = activity in {"Expedition", "Sanctuary", "Transcendence"}
         self.event_title = discord.ui.TextInput(
             label=i18n.t("panel.field_title", lang),
             max_length=100,
@@ -184,6 +185,7 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         self.mode = None
         self.content = None
         self.difficulty = None
+        self.stage = None
         self.description = None
 
         if activity == "Other":
@@ -228,6 +230,19 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
             )
             self.add_item(self.content)
             self.add_item(self.difficulty)
+        elif activity == "Transcendence":
+            self.content = discord.ui.TextInput(
+                label="Transcendence dungeon",
+                placeholder="Deus Research Base / Shattered Arkanis",
+                max_length=50,
+            )
+            self.stage = discord.ui.TextInput(
+                label="Stage",
+                placeholder="1 / 2 / 3 / 4",
+                max_length=1,
+            )
+            self.add_item(self.content)
+            self.add_item(self.stage)
 
         self.when = discord.ui.TextInput(
             label=i18n.t("panel.field_when", lang),
@@ -268,6 +283,15 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
         difficulty = (
             self.difficulty.value.strip() if self.difficulty is not None else None
         )
+        stage = None
+        if self.stage is not None and self.stage.value.strip():
+            try:
+                stage = int(self.stage.value.strip())
+            except ValueError:
+                await interaction.response.send_message(
+                    "❌ Stage must be 1, 2, 3 or 4.", ephemeral=True
+                )
+                return
         try:
             mode, content, difficulty = normalize_event_details(
                 activity=activity,
@@ -275,6 +299,7 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
                 content=content,
                 difficulty=difficulty,
             )
+            stage = normalize_stage(activity, stage)
         except EventCatalogError as err:
             await interaction.response.send_message(f"❌ {err}", ephemeral=True)
             return
@@ -299,6 +324,7 @@ class EventDetailsModal(ModalErrorMixin, discord.ui.Modal):
             mode=mode,
             content=content,
             difficulty=difficulty,
+            stage=stage,
         )
 
 
