@@ -172,7 +172,7 @@ class Groups(commands.Cog):
             await interaction.response.send_message(f"❌ {err}", ephemeral=True)
             return
         event_title = event_display_name(
-            title=event_title,
+            title=title,
             activity=activity.value,
             content=event_content,
         )
@@ -289,7 +289,7 @@ class Groups(commands.Cog):
             channel_id=channel.id,
             creator_id=interaction.user.id,
             creator_name=interaction.user.display_name,
-            title=event_title,
+            title=title,
             activity=activity,
             description=description,
             compo=comp_mode,
@@ -304,7 +304,7 @@ class Groups(commands.Cog):
             difficulty=difficulty,
         )
         await interaction.response.send_message(
-            i18n.t("recurring.created", lang, title=event_title, when=f"<t:{starts_at}:F>"),
+            i18n.t("recurring.created", lang, title=title, when=f"<t:{starts_at}:F>"),
             ephemeral=True,
         )
 
