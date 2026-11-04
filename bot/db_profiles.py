@@ -15,7 +15,9 @@ class ProfilesMixin:
         char_name / char_class left NULL.
         """
         async with self.conn.execute(
-            """SELECT s.*, p.char_name, p.char_class
+            """SELECT s.*, p.char_name, p.char_class,
+                      p.combat_power, p.item_level, p.character_level,
+                      p.server_name, p.race_name
                FROM signups s LEFT JOIN profiles p ON p.id = s.character_id
                WHERE s.message_id = ? ORDER BY s.joined_at""",
             (message_id,),
