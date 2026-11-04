@@ -181,7 +181,8 @@ CREATE TABLE IF NOT EXISTS recurrences (
     min_gs        INTEGER,
     mode          TEXT,
     content       TEXT,
-    difficulty    TEXT
+    difficulty    TEXT,
+    stage         INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -285,6 +286,7 @@ class Database(ProfilesMixin, BoardsMixin):
                 "mode": "TEXT",
                 "content": "TEXT",
                 "difficulty": "TEXT",
+                "stage": "INTEGER",
             },
         }
         for table, columns in added.items():
