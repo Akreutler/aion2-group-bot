@@ -22,7 +22,11 @@ from ..actions import publish_event, register_absence
 from ..branding import BANNER_URL, brand
 from ..embeds import build_event_embed
 from ..errors import ModalErrorMixin, ViewErrorMixin
-from ..event_catalog import EventCatalogError, event_display_name, normalize_event_details
+from ..event_catalog import (
+    EventCatalogError,
+    event_display_name,
+    normalize_event_details,
+)
 from ..logic import COMPO_OPEN, COMPO_STANDARD
 from ..utils.permissions import member_is_admin
 from ..utils.time_parse import ParseError, parse_when
