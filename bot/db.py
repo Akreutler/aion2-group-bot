@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS events (
     rsvp_prompt_id INTEGER,                        -- message id of that prompt
     voice_created INTEGER NOT NULL DEFAULT 0,      -- temp voice channel claimed
     voice_channel_id INTEGER,                      -- its channel, NULL once cleaned up
-    groups        INTEGER NOT NULL DEFAULT 1       -- display groups; 1 = single party
+    groups        INTEGER NOT NULL DEFAULT 1,      -- display groups; 1 = single party
+    min_ap        INTEGER,
+    min_gs        INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS signups (
@@ -169,7 +171,9 @@ CREATE TABLE IF NOT EXISTS recurrences (
     ping_role_id  INTEGER,
     next_at       INTEGER NOT NULL,               -- next occurrence (UTC)
     active        INTEGER NOT NULL DEFAULT 1,
-    groups        INTEGER NOT NULL DEFAULT 1       -- siege display groups; 1 = single
+    groups        INTEGER NOT NULL DEFAULT 1,      -- siege display groups; 1 = single
+    min_ap        INTEGER,
+    min_gs        INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -258,9 +262,13 @@ class Database(ProfilesMixin, BoardsMixin):
                 "voice_created": "INTEGER NOT NULL DEFAULT 0",
                 "voice_channel_id": "INTEGER",
                 "groups": "INTEGER NOT NULL DEFAULT 1",
+                "min_ap": "INTEGER",
+                "min_gs": "INTEGER",
             },
             "recurrences": {
                 "groups": "INTEGER NOT NULL DEFAULT 1",  # siege split, threaded
+                "min_ap": "INTEGER",
+                "min_gs": "INTEGER",
             },
         }
         for table, columns in added.items():
