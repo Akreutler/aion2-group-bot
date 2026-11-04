@@ -63,9 +63,7 @@ async def character_autocomplete(interaction: discord.Interaction, current: str)
     return (await _character_choices(interaction, current))[:25]
 
 
-async def plaync_server_autocomplete(
-    interaction: discord.Interaction, current: str
-):
+async def plaync_server_autocomplete(interaction: discord.Interaction, current: str):
     """Official EU server/race choices from PLAYNC.
 
     The value encodes region, race and server id so the slash command does not
@@ -162,9 +160,7 @@ def character_detail_line(row, lang: str = "en") -> str:
     if row["title_name"]:
         line += f"\n  🏅 *{row['title_name']}*"
     if row["plaync_character_id"] and row["server_id"] and row["region"]:
-        url = profile_url(
-            row["plaync_character_id"], row["server_id"], row["region"]
-        )
+        url = profile_url(row["plaync_character_id"], row["server_id"], row["region"])
         line += f"\n  🔗 [{i18n.t('profile.plaync_link', lang)}]({url})"
     return line
 
