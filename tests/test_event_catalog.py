@@ -7,6 +7,7 @@ from bot.event_catalog import (
     event_display_name,
     event_subtitle,
     normalize_event_details,
+    normalize_stage,
 )
 
 
@@ -107,3 +108,39 @@ def test_embed_subtitle_shows_sanctuary_without_expedition_mode():
         "difficulty": "Normal",
     }
     assert event_subtitle(event) == "Sanctuary · Abyssal Forge: Ludra · Normal"
+
+
+def test_transcendence_uses_two_dungeons():
+    for name in ("Deus Research Base", "Shattered Arkanis"):
+        mode, content, difficulty = normalize_event_details(
+            activity="Transcendence",
+            mode=None,
+            content=name,
+            difficulty=None,
+        )
+        assert (mode, content, difficulty) == (None, name, None)
+
+
+def test_transcendence_requires_stage_1_to_4():
+    assert normalize_stage("Transcendence", 1) == 1
+    assert normalize_stage("Transcendence", 4) == 4
+    with pytest.raises(EventCatalogError):
+        normalize_stage("Transcendence", None)
+    with pytest.raises(EventCatalogError):
+        normalize_stage("Transcendence", 5)
+
+
+def test_stage_is_rejected_outside_transcendence():
+    with pytest.raises(EventCatalogError):
+        normalize_stage("Expedition", 2)
+
+
+def test_transcendence_subtitle_uses_stage_not_difficulty():
+    event = {
+        "activity": "Transcendence",
+        "mode": None,
+        "content": "Shattered Arkanis",
+        "difficulty": None,
+        "stage": 4,
+    }
+    assert event_subtitle(event) == "Transcendence · Shattered Arkanis · Stage 4"
