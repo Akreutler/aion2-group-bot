@@ -18,6 +18,7 @@ from ..event_catalog import (
     event_display_name,
     event_subtitle,
     normalize_event_details,
+    normalize_stage,
 )
 from ..logic import COMPO_OPEN, COMPO_STANDARD, assign
 from ..utils.mentions import join_mentions, ping_permitted
@@ -108,6 +109,7 @@ class Groups(commands.Cog):
         mode="Expedition mode: Exploration or Conquest.",
         content="Expedition/Sanctuary instance.",
         difficulty="Normal or Hard where applicable.",
+        stage="Transcendence Stage 1–4.",
     )
     @app_commands.choices(
         repeat=[
@@ -116,6 +118,7 @@ class Groups(commands.Cog):
         activity=[
             app_commands.Choice(name="🏰 Expedition", value="Expedition"),
             app_commands.Choice(name="🔥 Sanctuary", value="Sanctuary"),
+            app_commands.Choice(name="🔮 Transcendence", value="Transcendence"),
             app_commands.Choice(name="🐉 Raid", value="Raid"),
             app_commands.Choice(name="🚩 Battleground", value="Battleground"),
             app_commands.Choice(name="⚔️ PvP", value="PvP"),
@@ -130,6 +133,12 @@ class Groups(commands.Cog):
         difficulty=[
             app_commands.Choice(name="Normal", value="Normal"),
             app_commands.Choice(name="Hard", value="Hard"),
+        ],
+        stage=[
+            app_commands.Choice(name="Stage 1", value=1),
+            app_commands.Choice(name="Stage 2", value=2),
+            app_commands.Choice(name="Stage 3", value=3),
+            app_commands.Choice(name="Stage 4", value=4),
         ],
         comp=[
             app_commands.Choice(
@@ -160,6 +169,7 @@ class Groups(commands.Cog):
         mode: app_commands.Choice[str] | None = None,
         content: str | None = None,
         difficulty: app_commands.Choice[str] | None = None,
+        stage: app_commands.Choice[int] | None = None,
     ):
         lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
         try:
@@ -168,6 +178,13 @@ class Groups(commands.Cog):
                 mode=mode.value if mode else None,
                 content=content,
                 difficulty=difficulty.value if difficulty else None,
+            )
+        except EventCatalogError as err:
+            await interaction.response.send_message(f"❌ {err}", ephemeral=True)
+            return
+        try:
+            event_stage = normalize_stage(
+                activity.value, stage.value if stage else None
             )
         except EventCatalogError as err:
             await interaction.response.send_message(f"❌ {err}", ephemeral=True)
@@ -226,6 +243,7 @@ class Groups(commands.Cog):
                 mode=event_mode,
                 content=event_content,
                 difficulty=event_difficulty,
+                stage=event_stage,
             )
             return
 
@@ -244,6 +262,7 @@ class Groups(commands.Cog):
             mode=event_mode,
             content=event_content,
             difficulty=event_difficulty,
+            stage=event_stage,
         )
 
     async def _create_recurrence(
@@ -264,6 +283,7 @@ class Groups(commands.Cog):
         mode=None,
         content=None,
         difficulty=None,
+        stage=None,
     ):
         """Stores a weekly recurrence; the loop posts each instance in advance."""
         if not await member_is_moderator(self.bot.db, interaction.user):
@@ -303,6 +323,7 @@ class Groups(commands.Cog):
             mode=mode,
             content=content,
             difficulty=difficulty,
+            stage=stage,
         )
         await interaction.response.send_message(
             i18n.t("recurring.created", lang, title=title, when=f"<t:{starts_at}:F>"),
@@ -722,6 +743,7 @@ class Groups(commands.Cog):
             "mode": rec["mode"],
             "content": rec["content"],
             "difficulty": rec["difficulty"],
+            "stage": rec["stage"],
         }
         await post_event(self.bot, channel, event, lang, ping_role)
 
