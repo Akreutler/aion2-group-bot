@@ -15,7 +15,6 @@ from urllib.parse import quote, unquote
 
 import aiohttp
 
-
 SEARCH_URL = "https://api-search.plaync.com/aion2global/search/v2/character"
 INFO_URL = "https://aion2.plaync.com/api/character/info"
 SERVERS_URL = "https://aion2.plaync.com/es-es/api/gameinfo/servers"
