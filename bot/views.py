@@ -551,6 +551,11 @@ class SignupView(ViewErrorMixin, discord.ui.View):
         if event is None:
             return
 
+        # A PLAYNC refresh can take longer than Discord's ~3 second interaction
+        # acknowledgement window. Acknowledge immediately, then continue via
+        # followups so the button never expires while we wait on the API.
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         characters = await db.get_profiles(event["guild_id"], interaction.user.id)
         characters = await _refresh_stale_profiles(
             interaction.client, db, event["guild_id"], interaction.user.id, characters
@@ -559,7 +564,7 @@ class SignupView(ViewErrorMixin, discord.ui.View):
         already_in_this_role = existing is not None and existing["role"] == role
 
         if already_in_this_role and len(characters) < 2:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 i18n.t(
                     "signup.already_role",
                     lang,
@@ -597,13 +602,13 @@ class SignupView(ViewErrorMixin, discord.ui.View):
                     label=ROLE_LABEL[role],
                 )
             )
-            await interaction.response.send_message(intro, view=picker, ephemeral=True)
+            await interaction.followup.send(intro, view=picker, ephemeral=True)
             return
 
         character = characters[0] if characters else None
         requirement_error = _requirements_error(event, character, lang)
         if requirement_error:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"❌ {requirement_error}", ephemeral=True
             )
             return
@@ -612,7 +617,7 @@ class SignupView(ViewErrorMixin, discord.ui.View):
             message, party_before = await self.perform_join(
                 interaction, event, role, character, lang
             )
-            await interaction.response.send_message(message, ephemeral=True)
+            await interaction.followup.send(message, ephemeral=True)
             await refresh_event_message(interaction.client, event)
             await self.announce_promoted(interaction, event, party_before)
 
