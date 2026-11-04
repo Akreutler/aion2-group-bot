@@ -32,9 +32,9 @@ def character_option(row, *, default: bool = False) -> discord.SelectOption:
     """One character as a dropdown entry, enriched with PLAYNC stats."""
     details = [row["char_class"], ROLE_LABEL[row["role"]]]
     if row["combat_power"] is not None:
-        details.append(f"{row['combat_power'] / 1000:.1f}k CP")
+        details.append(f"{row['combat_power'] / 1000:.1f}k AP")
     if row["item_level"] is not None:
-        details.append(f"{row['item_level']:,} IL")
+        details.append(f"{row['item_level']:,} GS")
     return discord.SelectOption(
         label=row["char_name"][:100],
         value=str(row["id"]),
