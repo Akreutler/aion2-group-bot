@@ -59,6 +59,18 @@ CREATE TABLE IF NOT EXISTS profiles (
     char_class TEXT    NOT NULL,
     role       TEXT    NOT NULL,                  -- 'tank', 'heal' or 'dps'
     is_main    INTEGER NOT NULL DEFAULT 0,
+    plaync_character_id TEXT,
+    region      TEXT,
+    race_id     INTEGER,
+    race_name   TEXT,
+    server_id   INTEGER,
+    server_name TEXT,
+    character_level INTEGER,
+    combat_power INTEGER,
+    item_level   INTEGER,
+    title_name   TEXT,
+    profile_image TEXT,
+    plaync_updated_at INTEGER,
     UNIQUE (guild_id, user_id, char_name)
 );
 
@@ -221,6 +233,20 @@ class Database(ProfilesMixin, BoardsMixin):
                 "dashboard_channel_id": "INTEGER",  # legion dashboard location
                 "dashboard_message_id": "INTEGER",  # auto-refreshed in place
                 "recruit_channel_id": "INTEGER",  # officers' recruitment review channel
+            },
+            "profiles": {
+                "plaync_character_id": "TEXT",
+                "region": "TEXT",
+                "race_id": "INTEGER",
+                "race_name": "TEXT",
+                "server_id": "INTEGER",
+                "server_name": "TEXT",
+                "character_level": "INTEGER",
+                "combat_power": "INTEGER",
+                "item_level": "INTEGER",
+                "title_name": "TEXT",
+                "profile_image": "TEXT",
+                "plaync_updated_at": "INTEGER",
             },
             "signups": {
                 "character_id": "INTEGER",  # which character the member brings
