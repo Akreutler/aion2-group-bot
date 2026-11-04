@@ -18,7 +18,7 @@ import aiohttp
 
 SEARCH_URL = "https://api-search.plaync.com/aion2global/search/v2/character"
 INFO_URL = "https://aion2.plaync.com/api/character/info"
-SERVERS_URL = "https://aion2.plaync.com/en-us/api/gameinfo/servers"
+SERVERS_URL = "https://aion2.plaync.com/es-es/api/gameinfo/servers"
 
 _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -91,7 +91,7 @@ class PlayNCClient:
 
         payload = await self._json(
             SERVERS_URL,
-            params={"lang": "en-US", "region": region},
+            params={"lang": "es-ES", "region": region},
         )
         rows = payload.get("serverList") or []
         result = [
