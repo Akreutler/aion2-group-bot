@@ -85,9 +85,9 @@ def _class_suffix(signup, classes: dict, *, role_shown: bool = False) -> str:
     combat_power = _row_get(signup, "combat_power")
     item_level = _row_get(signup, "item_level")
     if combat_power is not None:
-        stats.append(f"{combat_power / 1000:.1f}k CP")
+        stats.append(f"{combat_power / 1000:.1f}k AP")
     if item_level is not None:
-        stats.append(f"{item_level:,} IL")
+        stats.append(f"{item_level:,} GS")
     stats_suffix = f" · {' · '.join(stats)}" if stats else ""
 
     if name and char_class:
