@@ -228,7 +228,7 @@ class Database(ProfilesMixin, BoardsMixin):
                 "absence_channel_id": "INTEGER",
                 "member_role_id": "INTEGER",  # role that means "validated member"
                 "rsvp_channel_id": "INTEGER",  # where RSVP prompts are posted
-                "language": "TEXT",  # 'fr' | 'en' | NULL = auto
+                "language": "TEXT",  # 'fr' | 'en' | 'es' | NULL = auto
                 "panel_channel_id": "INTEGER",  # quick-actions panel location
                 "panel_message_id": "INTEGER",  # so /panel refreshes it in place
                 "admin_role_id": "INTEGER",  # role treated as a Kisk admin
