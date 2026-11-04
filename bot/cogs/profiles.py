@@ -16,7 +16,7 @@ from .. import config, i18n
 from ..branding import brand
 from ..embeds import ROLE_EMOJI, ROLE_LABEL
 from ..logic import MAX_CHARACTERS, ROLES
-from ..plaync import PlayNCClient, PlayNCError
+from ..plaync import PlayNCClient, PlayNCError, profile_url
 from ..utils.permissions import member_is_admin
 
 # The playable classes, taken from the emoji configuration so that adding one
@@ -157,8 +157,15 @@ def character_detail_line(row) -> str:
         meta.append(f"Lv. {row['character_level']}")
     if meta:
         line += "\n  ↳ " + " · ".join(meta)
+    if row["legion_name"]:
+        line += f"\n  🛡️ Legion: **{row['legion_name']}**"
     if row["title_name"]:
         line += f"\n  🏅 *{row['title_name']}*"
+    if row["plaync_character_id"] and row["server_id"] and row["region"]:
+        url = profile_url(
+            row["plaync_character_id"], row["server_id"], row["region"]
+        )
+        line += f"\n  🔗 [PLAYNC profile]({url})"
     return line
 
 
@@ -261,6 +268,7 @@ class Profile(commands.GroupCog, name="profile"):
             title_name=official.title_name,
             profile_image=official.profile_image,
             updated_at=int(time.time()),
+            legion_name=official.legion_name,
         )
 
         detail = (
@@ -328,6 +336,7 @@ class Profile(commands.GroupCog, name="profile"):
             title_name=official.title_name,
             profile_image=official.profile_image,
             updated_at=int(time.time()),
+            legion_name=official.legion_name,
         )
         await interaction.followup.send(
             f"✅ Refreshed **{official.name}** · "
