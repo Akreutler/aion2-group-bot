@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     combat_power INTEGER,
     item_level   INTEGER,
     title_name   TEXT,
+    legion_name  TEXT,
     profile_image TEXT,
     plaync_updated_at INTEGER,
     UNIQUE (guild_id, user_id, char_name)
@@ -249,6 +250,7 @@ class Database(ProfilesMixin, BoardsMixin):
                 "combat_power": "INTEGER",
                 "item_level": "INTEGER",
                 "title_name": "TEXT",
+                "legion_name": "TEXT",
                 "profile_image": "TEXT",
                 "plaync_updated_at": "INTEGER",
             },
