@@ -153,7 +153,9 @@ def build_event_embed(
     if min_gs:
         requirements.append(f"{min_gs:,} GS")
     if requirements:
-        lines.append(i18n.t("event.requirements", lang, values=" · ".join(requirements)))
+        lines.append(
+            i18n.t("event.requirements", lang, values=" · ".join(requirements))
+        )
     if event["description"]:
         lines.append(event["description"])
 
