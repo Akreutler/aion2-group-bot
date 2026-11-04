@@ -30,7 +30,7 @@ RECRUIT_BANNER_URL = asset_url("banners/recruitment.png")
 # the same art; anything else falls back to the neutral "other" banner.
 _ACTIVITY_SLUG = {
     "Expedition": "dungeon",
-    "Sanctuary": "raid",
+    "Sanctuary": "dungeon",
     "Dungeon": "dungeon",
     "Raid": "raid",
     "Battleground": "battleground",
