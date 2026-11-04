@@ -11,7 +11,7 @@ EVENT = {
     "creator_id": 4,
     "creator_name": "Naxos",
     "title": "Fire Temple",
-    "activity": "Dungeon",
+    "activity": "Expedition",
     "description": None,
     "compo": COMPO_STANDARD,
     "size": 5,
@@ -200,6 +200,31 @@ def test_rsvp_embed_follows_language():
     assert "Tu viens ?" in embed.title
     assert any("Présents (0)" in f.name for f in embed.fields)
     assert any("Sans réponse (0)" in f.name for f in embed.fields)
+
+
+def test_structured_expedition_path_is_visible():
+    event = {
+        **EVENT,
+        "mode": "Conquest",
+        "content": "Fire Temple",
+        "difficulty": "Hard",
+    }
+    embed = build_event_embed(event, [])
+    assert "Expedition · Conquest · Fire Temple · Hard" in embed.description
+
+
+def test_sanctuary_path_stays_separate_from_expedition():
+    event = {
+        **EVENT,
+        "title": "Abyssal Forge: Ludra",
+        "activity": "Sanctuary",
+        "mode": None,
+        "content": "Abyssal Forge: Ludra",
+        "difficulty": "Normal",
+    }
+    embed = build_event_embed(event, [])
+    assert "Sanctuary · Abyssal Forge: Ludra · Normal" in embed.description
+    assert "Expedition" not in embed.description
 
 
 def test_event_requirements_are_visible():
