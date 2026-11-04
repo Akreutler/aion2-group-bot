@@ -81,11 +81,20 @@ def _class_suffix(signup, classes: dict, *, role_shown: bool = False) -> str:
         icon = ""
     if icon:
         icon += " "
+    stats = []
+    combat_power = _row_get(signup, "combat_power")
+    item_level = _row_get(signup, "item_level")
+    if combat_power is not None:
+        stats.append(f"{combat_power / 1000:.1f}k CP")
+    if item_level is not None:
+        stats.append(f"{item_level:,} IL")
+    stats_suffix = f" · {' · '.join(stats)}" if stats else ""
+
     if name and char_class:
-        return f" — {icon}*{name} ({char_class})*"
+        return f" — {icon}*{name} ({char_class})*{stats_suffix}"
     if name:
-        return f" — *{name}*"
-    return f" — {icon}*{char_class}*" if char_class else ""
+        return f" — *{name}*{stats_suffix}"
+    return f" — {icon}*{char_class}*{stats_suffix}" if char_class else ""
 
 
 def _names(members: list, classes: dict) -> str:
