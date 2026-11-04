@@ -53,7 +53,8 @@ EMOJI_DPS = _emoji(os.getenv("EMOJI_DPS"), "🗡️", "EMOJI_DPS")
 # shows slash-command choice lists as plain text, and prints the bot's
 # presence literally, raw <:name:id> code and all.
 DEFAULT_EMOJI_ACTIVITY = {
-    "Dungeon": "🏰",
+    "Expedition": "🏰",
+    "Sanctuary": "🔥",
     "Raid": "🐉",
     "Battleground": "🚩",
     "PvP": "⚔️",
@@ -73,6 +74,20 @@ EMOJI_ACTIVITY = {
 # The event types offered by menus and choices, in display order. Single source
 # of truth for the panel's event dropdown and the LFG activity picker.
 ACTIVITIES = tuple(DEFAULT_EMOJI_ACTIVITY)
+
+# Structured PvE content. Exploration and Conquest use the same Expedition
+# instances; only Conquest has a difficulty selector.
+EXPEDITION_CONTENT = (
+    "Krao Cave",
+    "Draupnir",
+    "Uruguru Canyon",
+    "Vakron Sky Island",
+    "Fire Temple",
+    "Ferocious Horn Den",
+)
+EXPEDITION_MODES = ("Exploration", "Conquest")
+DIFFICULTIES = ("Normal", "Hard")
+SANCTUARY_CONTENT = ("Abyssal Forge: Ludra",)
 
 
 # Aion 2 class emojis, overridable the same way (EMOJI_GLADIATOR, EMOJI_TEMPLAR
