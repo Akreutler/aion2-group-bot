@@ -4,6 +4,7 @@ import discord
 
 from . import config, i18n
 from .branding import activity_banner_url, activity_icon_url, brand
+from .event_catalog import event_subtitle
 from .logic import (
     COMPO_STANDARD,
     ROLES,
@@ -20,7 +21,8 @@ def _with_legacy_labels(mapping: dict) -> dict:
     """Events created by earlier versions carry French activity labels."""
     return {
         **mapping,
-        "Donjon": mapping["Dungeon"],
+        "Dungeon": mapping["Expedition"],
+        "Donjon": mapping["Expedition"],
         "Abysses": mapping["Abyss"],
         "Autre": mapping["Other"],
     }
@@ -139,7 +141,7 @@ def build_event_embed(
 
     # The role fields below already show the layout, so no "Setup" line —
     # just the event type in clear text, with the schedule when there is one.
-    header = f"**{event['activity']}**"
+    header = f"**{event_subtitle(event)}**"
     if event["starts_at"]:
         header += f" • 🕘 <t:{event['starts_at']}:F> (<t:{event['starts_at']}:R>)"
     lines = [header]
@@ -288,7 +290,8 @@ def build_rsvp_embed(
     when = f" • 🕘 <t:{event['starts_at']}:R>" if event["starts_at"] else ""
     embed = discord.Embed(
         title=f"{emoji} " + i18n.t("rsvp.title", lang, title=event["title"]),
-        description=f"**{event['activity']}**{when}\n" + i18n.t("rsvp.body_hint", lang),
+        description=f"**{event_subtitle(event)}**{when}\n"
+        + i18n.t("rsvp.body_hint", lang),
         colour=discord.Colour.blurple(),
     )
     brand(embed)
