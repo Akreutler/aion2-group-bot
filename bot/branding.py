@@ -31,6 +31,7 @@ RECRUIT_BANNER_URL = asset_url("banners/recruitment.png")
 _ACTIVITY_SLUG = {
     "Expedition": "dungeon",
     "Sanctuary": "dungeon",
+    "Transcendence": "dungeon",
     "Dungeon": "dungeon",
     "Raid": "raid",
     "Battleground": "battleground",
