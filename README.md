@@ -250,7 +250,6 @@ The event creator or a moderator can cancel an event.
 
 Everyone who signed up is notified automatically.
 
-#
 ## 🔎 Official PLAYNC profiles
 
 Character registration is backed by AION 2's public PLAYNC character pages.
@@ -282,7 +281,7 @@ event.
 Players can register their characters with:
 
 ```text
-/profile add name: Kratos class: Templar role: Tank
+/profile add name: Kratos server: Elyos · Kaisinel role: Tank
 ```
 
 Each player can register **up to 10 characters** — a main and as many alts as
@@ -790,7 +789,7 @@ posted. Pinging `@everyone` is reserved to moderators.
 ## Profiles
 
 ```text
-/profile add name: Kratos class: Templar role: Tank [main: True]
+/profile add name: Kratos server: Elyos · Kaisinel role: Tank [main: True]
 /profile main character: Loki                        → change your default character
 
 /profile show [member]
@@ -1028,10 +1027,10 @@ the roster and the character picker at once.
 commented-out line away: uncomment it in `CLASS_EMOJI` the day the class
 launches and it appears everywhere on its own.
 
-`/profile add` offers exactly these classes and accepts nothing else, so a
-typo can't slip into the roster. Characters registered under an older version,
-when the field was free text, keep working — they simply show no class icon.
-Re-running `/profile add` with the same character name puts them right.
+`/profile add` no longer asks the player to choose a class. Kisk gets the
+class from the official PLAYNC profile, so class typos cannot enter through the
+normal registration flow. Legacy manually-created characters remain readable.
+Re-running `/profile add` with the same character name updates the linked data.
 
 ---
 
