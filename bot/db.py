@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS events (
     min_gs        INTEGER,
     mode          TEXT,
     content       TEXT,
-    difficulty    TEXT
+    difficulty    TEXT,
+    stage         INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS signups (
@@ -275,6 +276,7 @@ class Database(ProfilesMixin, BoardsMixin):
                 "mode": "TEXT",
                 "content": "TEXT",
                 "difficulty": "TEXT",
+                "stage": "INTEGER",
             },
             "recurrences": {
                 "groups": "INTEGER NOT NULL DEFAULT 1",  # siege split, threaded
