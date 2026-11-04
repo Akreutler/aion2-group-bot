@@ -138,9 +138,9 @@ def character_line(row, *, star: bool = True) -> str:
     if row["combat_power"] is not None or row["item_level"] is not None:
         bits = []
         if row["combat_power"] is not None:
-            bits.append(f"{row['combat_power']:,} CP")
+            bits.append(f"{row['combat_power']:,} AP")
         if row["item_level"] is not None:
-            bits.append(f"{row['item_level']:,} IL")
+            bits.append(f"{row['item_level']:,} GS")
         line += " · " + " · ".join(bits)
     return line
 
@@ -309,7 +309,7 @@ class Profile(commands.GroupCog, name="profile"):
             f"{ROLE_EMOJI[role.value]} **{official.name}** "
             f"({official.char_class}, {ROLE_LABEL[role.value]})\n"
             f"{official.race_name} · {official.server_name} · Lv. {official.level}\n"
-            f"⚔️ {official.combat_power:,} CP · 🛡️ {official.item_level:,} IL"
+            f"⚔️ {official.combat_power:,} AP · 🛡️ {official.item_level:,} GS"
         )
         was_first = not characters
         note = i18n.t(
@@ -373,7 +373,7 @@ class Profile(commands.GroupCog, name="profile"):
         )
         await interaction.followup.send(
             f"✅ Refreshed **{official.name}** · "
-            f"{official.combat_power:,} CP · {official.item_level:,} IL",
+            f"{official.combat_power:,} AP · {official.item_level:,} GS",
             ephemeral=True,
         )
 
