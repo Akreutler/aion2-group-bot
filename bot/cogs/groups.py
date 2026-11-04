@@ -12,6 +12,12 @@ from ..actions import post_event, publish_event, resolve_channel
 from ..branding import brand
 from ..embeds import build_rsvp_embed
 from ..errors import resilient_tick
+from ..event_catalog import (
+    EventCatalogError,
+    content_choices,
+    event_display_name,
+    normalize_event_details,
+)
 from ..logic import COMPO_OPEN, COMPO_STANDARD, assign
 from ..utils.mentions import join_mentions, ping_permitted
 from ..utils.messages import parse_message_id
@@ -29,6 +35,20 @@ VOICE_CLEANUP_GRACE = 3 * 60 * 60
 # A recurring event's instance is posted this long before its occurrence, so
 # players have time to sign up.
 RECURRENCE_LEAD = 24 * 60 * 60
+
+
+async def event_content_autocomplete(
+    interaction: discord.Interaction, current: str
+):
+    activity = getattr(interaction.namespace, "activity", None)
+    value = getattr(activity, "value", activity)
+    cur = current.casefold()
+    return [
+        app_commands.Choice(name=name, value=name)
+        for name in content_choices(value)
+        if not cur or cur in name.casefold()
+    ][:25]
+
 
 
 @app_commands.guild_only()
@@ -73,7 +93,7 @@ class Groups(commands.Cog):
     )
     @app_commands.rename(activity="type")
     @app_commands.describe(
-        title="Name of the event (e.g. “Fire Temple HM”)",
+        title="Optional custom title. Structured PvE defaults to the instance name.",
         activity="Type of event",
         comp="Party of 5, party of 10 (raid/battleground), or open.",
         when="E.g. “21:00”, “9pm”, “tomorrow 20:30”, “30/08 21:00”. Empty = right now.",
@@ -84,19 +104,31 @@ class Groups(commands.Cog):
         groups="Split into this many groups for a siege (Open parties only).",
         min_ap="Minimum AP required to join with a character (optional).",
         min_gs="Minimum GS required to join with a character (optional).",
+        mode="Expedition mode: Exploration or Conquest.",
+        content="Expedition/Sanctuary instance.",
+        difficulty="Normal or Hard where applicable.",
     )
     @app_commands.choices(
         repeat=[
             app_commands.Choice(name="Weekly", value="weekly"),
         ],
         activity=[
-            app_commands.Choice(name="🏰 Dungeon", value="Dungeon"),
+            app_commands.Choice(name="🏰 Expedition", value="Expedition"),
+            app_commands.Choice(name="🔥 Sanctuary", value="Sanctuary"),
             app_commands.Choice(name="🐉 Raid", value="Raid"),
             app_commands.Choice(name="🚩 Battleground", value="Battleground"),
             app_commands.Choice(name="⚔️ PvP", value="PvP"),
             app_commands.Choice(name="🌀 Rift", value="Rift"),
             app_commands.Choice(name="🌌 Abyss", value="Abyss"),
             app_commands.Choice(name="🎲 Other", value="Other"),
+        ],
+        mode=[
+            app_commands.Choice(name="Exploration", value="Exploration"),
+            app_commands.Choice(name="Conquest", value="Conquest"),
+        ],
+        difficulty=[
+            app_commands.Choice(name="Normal", value="Normal"),
+            app_commands.Choice(name="Hard", value="Hard"),
         ],
         comp=[
             app_commands.Choice(
@@ -109,12 +141,13 @@ class Groups(commands.Cog):
             app_commands.Choice(name="Open — no role limits", value=COMPO_OPEN),
         ],
     )
+    @app_commands.autocomplete(content=event_content_autocomplete)
     async def event(
         self,
         interaction: discord.Interaction,
-        title: app_commands.Range[str, 1, 100],
         activity: app_commands.Choice[str],
         comp: app_commands.Choice[str],
+        title: app_commands.Range[str, 1, 100] | None = None,
         when: str | None = None,
         size: app_commands.Range[int, 2, 25] | None = None,
         description: app_commands.Range[str, 1, 500] | None = None,
@@ -123,8 +156,27 @@ class Groups(commands.Cog):
         groups: app_commands.Range[int, 2, 8] | None = None,
         min_ap: app_commands.Range[int, 1, 9999999] | None = None,
         min_gs: app_commands.Range[int, 1, 99999] | None = None,
+        mode: app_commands.Choice[str] | None = None,
+        content: str | None = None,
+        difficulty: app_commands.Choice[str] | None = None,
     ):
         lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
+        try:
+            event_mode, event_content, event_difficulty = normalize_event_details(
+                activity=activity.value,
+                mode=mode.value if mode else None,
+                content=content,
+                difficulty=difficulty.value if difficulty else None,
+            )
+        except EventCatalogError as err:
+            await interaction.response.send_message(f"❌ {err}", ephemeral=True)
+            return
+        event_title = event_display_name(
+            title=event_title,
+            activity=activity.value,
+            content=event_content,
+        )
+
         starts_at = None
         if when:
             try:
@@ -160,7 +212,7 @@ class Groups(commands.Cog):
             await self._create_recurrence(
                 interaction,
                 lang,
-                title=title,
+                title=event_title,
                 activity=activity.value,
                 comp_mode=comp_mode,
                 size=party_size,
@@ -170,12 +222,15 @@ class Groups(commands.Cog):
                 groups=group_count,
                 min_ap=min_ap,
                 min_gs=min_gs,
+                mode=event_mode,
+                content=event_content,
+                difficulty=event_difficulty,
             )
             return
 
         await publish_event(
             interaction,
-            title=title,
+            title=event_title,
             activity=activity.value,
             comp_mode=comp_mode,
             size=party_size,
@@ -185,6 +240,9 @@ class Groups(commands.Cog):
             groups=group_count,
             min_ap=min_ap,
             min_gs=min_gs,
+            mode=event_mode,
+            content=event_content,
+            difficulty=event_difficulty,
         )
 
     async def _create_recurrence(
@@ -202,6 +260,9 @@ class Groups(commands.Cog):
         groups=1,
         min_ap=None,
         min_gs=None,
+        mode=None,
+        content=None,
+        difficulty=None,
     ):
         """Stores a weekly recurrence; the loop posts each instance in advance."""
         if not await member_is_moderator(self.bot.db, interaction.user):
@@ -228,7 +289,7 @@ class Groups(commands.Cog):
             channel_id=channel.id,
             creator_id=interaction.user.id,
             creator_name=interaction.user.display_name,
-            title=title,
+            title=event_title,
             activity=activity,
             description=description,
             compo=comp_mode,
@@ -238,9 +299,12 @@ class Groups(commands.Cog):
             groups=groups,
             min_ap=min_ap,
             min_gs=min_gs,
+            mode=mode,
+            content=content,
+            difficulty=difficulty,
         )
         await interaction.response.send_message(
-            i18n.t("recurring.created", lang, title=title, when=f"<t:{starts_at}:F>"),
+            i18n.t("recurring.created", lang, title=event_title, when=f"<t:{starts_at}:F>"),
             ephemeral=True,
         )
 
@@ -654,6 +718,9 @@ class Groups(commands.Cog):
             "groups": rec["groups"],
             "min_ap": rec["min_ap"],
             "min_gs": rec["min_gs"],
+            "mode": rec["mode"],
+            "content": rec["content"],
+            "difficulty": rec["difficulty"],
         }
         await post_event(self.bot, channel, event, lang, ping_role)
 
