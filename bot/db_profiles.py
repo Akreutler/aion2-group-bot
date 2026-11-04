@@ -134,6 +134,57 @@ class ProfilesMixin:
         await self.conn.commit()
         return character_id
 
+    async def update_plaync_character(
+        self,
+        character_id: int,
+        *,
+        plaync_character_id: str,
+        region: str,
+        race_id: int,
+        race_name: str,
+        server_id: int,
+        server_name: str,
+        character_level: int,
+        combat_power: int,
+        item_level: int,
+        title_name: str | None,
+        profile_image: str | None,
+        updated_at: int,
+    ) -> None:
+        """Stores the latest public PLAYNC metadata for a registered character."""
+        await self.conn.execute(
+            """UPDATE profiles SET
+                   plaync_character_id = ?,
+                   region = ?,
+                   race_id = ?,
+                   race_name = ?,
+                   server_id = ?,
+                   server_name = ?,
+                   character_level = ?,
+                   combat_power = ?,
+                   item_level = ?,
+                   title_name = ?,
+                   profile_image = ?,
+                   plaync_updated_at = ?
+               WHERE id = ?""",
+            (
+                plaync_character_id,
+                region,
+                race_id,
+                race_name,
+                server_id,
+                server_name,
+                character_level,
+                combat_power,
+                item_level,
+                title_name,
+                profile_image,
+                updated_at,
+                character_id,
+            ),
+        )
+        await self.conn.commit()
+
     async def _seat_main(self, guild_id: int, user_id: int, character_id: int) -> None:
         """Makes `character_id` the one row of that member carrying is_main."""
         await self.conn.execute(
