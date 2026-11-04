@@ -19,7 +19,13 @@ repo, it detects the `Dockerfile`, and every `git push` redeploys.
 
 1. Create an account on railway.com (GitHub sign-in).
 2. **New Project → Deploy from GitHub repo** → pick `aion2-group-bot`.
-3. Under **Variables**, add `DISCORD_TOKEN` (and `GUILD_ID`, `TIMEZONE`...).
+3. Under **Variables**, add at least:
+   - `DISCORD_TOKEN` — the bot token.
+   - `TIMEZONE=Europe/Madrid` — or the timezone your community uses.
+   - `DB_PATH=/app/data/bot.db`.
+   - `PLAYNC_REFRESH_MINUTES=60`.
+   - Leave `GUILD_ID` **empty for a public multi-server bot**. Set it only
+     during development when you want commands synced to one test server.
 4. Add a **Volume** mounted on `/app/data` so the SQLite database survives
    redeployments.
 
@@ -39,7 +45,7 @@ administer.
 
 ```bash
 sudo apt update && sudo apt install -y python3-venv git
-git clone https://github.com/NaxosOne/aion2-group-bot.git
+git clone https://github.com/Akreutler/aion2-group-bot.git
 cd aion2-group-bot
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env && nano .env   # paste your token
@@ -89,3 +95,23 @@ server), without Oracle's quirks. Simple, reliable, not free.
   persistent volume on `/app/data`, or everything is lost on each redeploy.
 - **Never** put the token in the code or on GitHub: always an environment
   variable (local `.env` file, "Variables" at your host).
+
+
+## Public multi-server deployment
+
+One running Kisk process can serve many Discord servers. Do **not** launch one
+copy per guild. Data is scoped by Discord `guild_id` in SQLite.
+
+For the public bot:
+
+1. Leave `GUILD_ID` empty so slash commands are registered globally.
+2. In Discord Developer Portal, keep **Public Bot** enabled.
+3. The installation URL needs the `bot` and `applications.commands` scopes
+   plus Kisk's required channel/thread permissions.
+4. Keep one persistent `/app/data` volume. All guilds share the same database
+   file, but their settings, profiles and events remain guild-scoped.
+5. Keep the bot token in the hosting provider's secret/environment settings,
+   never in GitHub.
+
+Kisk deliberately uses a guild-neutral Discord presence. A public bot must not
+show one server's event title to every other server it belongs to.
