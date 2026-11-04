@@ -145,6 +145,23 @@ def character_line(row, *, star: bool = True) -> str:
     return line
 
 
+def character_detail_line(row) -> str:
+    """Detailed profile view for one character."""
+    line = character_line(row)
+    meta = []
+    if row["race_name"]:
+        meta.append(row["race_name"])
+    if row["server_name"]:
+        meta.append(row["server_name"])
+    if row["character_level"] is not None:
+        meta.append(f"Lv. {row['character_level']}")
+    if meta:
+        line += "\n  ↳ " + " · ".join(meta)
+    if row["title_name"]:
+        line += f"\n  🏅 *{row['title_name']}*"
+    return line
+
+
 @app_commands.guild_only()
 class Profile(commands.GroupCog, name="profile"):
     """Register and browse the members' characters."""
@@ -162,66 +179,7 @@ class Profile(commands.GroupCog, name="profile"):
         self.prune_departed.cancel()
 
     @app_commands.command(
-        name="set", description="Register one of your characters (or update it)"
-    )
-    @app_commands.rename(char_class="class")
-    @app_commands.describe(
-        name="The character's in-game name — an existing name updates it",
-        char_class="Its class",
-        role="Its party role",
-        main="Make it your main character (your first one always is)",
-    )
-    @app_commands.choices(
-        char_class=CLASS_CHOICES,
-        role=[
-            app_commands.Choice(name="🛡️ Tank", value="tank"),
-            app_commands.Choice(name="💚 Heal", value="heal"),
-            app_commands.Choice(name="🗡️ DPS", value="dps"),
-        ],
-    )
-    async def set(
-        self,
-        interaction: discord.Interaction,
-        name: app_commands.Range[str, 1, 32],
-        char_class: app_commands.Choice[str],
-        role: app_commands.Choice[str],
-        main: bool = False,
-    ):
-        lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
-        name, char_class = name.strip(), char_class.value
-        characters = await self.bot.db.get_profiles(
-            interaction.guild_id, interaction.user.id
-        )
-        known = {row["char_name"].lower() for row in characters}
-        if name.lower() not in known and len(characters) >= MAX_CHARACTERS:
-            await interaction.response.send_message(
-                i18n.t("profile.cap_reached", lang, max=MAX_CHARACTERS),
-                ephemeral=True,
-            )
-            return
-
-        await self.bot.db.add_character(
-            interaction.guild_id,
-            interaction.user.id,
-            name,
-            char_class,
-            role.value,
-            make_main=main,
-        )
-        was_first = not characters
-        detail = (
-            f"{ROLE_EMOJI[role.value]} **{name}** "
-            f"({char_class}, {ROLE_LABEL[role.value]})"
-        )
-        note = i18n.t(
-            "profile.note_main" if main or was_first else "profile.note_alt", lang
-        )
-        await interaction.response.send_message(
-            i18n.t("profile.saved", lang, detail=detail, note=note), ephemeral=True
-        )
-
-    @app_commands.command(
-        name="link", description="Register a character from the official AION 2 profile"
+        name="add", description="Add or update a character from the official AION 2 profile"
     )
     @app_commands.describe(
         name="Exact in-game character name",
@@ -237,7 +195,7 @@ class Profile(commands.GroupCog, name="profile"):
             app_commands.Choice(name="🗡️ DPS", value="dps"),
         ],
     )
-    async def link(
+    async def add(
         self,
         interaction: discord.Interaction,
         name: app_commands.Range[str, 1, 32],
@@ -316,7 +274,7 @@ class Profile(commands.GroupCog, name="profile"):
             "profile.note_main" if main or was_first else "profile.note_alt", lang
         )
         await interaction.followup.send(
-            f"✅ Linked from PLAYNC\n{detail}\n{note}", ephemeral=True
+            f"✅ Added from PLAYNC\n{detail}\n{note}", ephemeral=True
         )
 
     @app_commands.command(
@@ -337,7 +295,7 @@ class Profile(commands.GroupCog, name="profile"):
             return
         if not row["plaync_character_id"] or not row["region"] or not row["server_id"]:
             await interaction.response.send_message(
-                "This character is not linked to PLAYNC yet. Use /profile link first.",
+                "This character is not linked to PLAYNC yet. Use /profile add first.",
                 ephemeral=True,
             )
             return
@@ -425,7 +383,7 @@ class Profile(commands.GroupCog, name="profile"):
         )
         embed = discord.Embed(
             title=title,
-            description="\n".join(character_line(row) for row in characters),
+            description="\n\n".join(character_detail_line(row) for row in characters),
             colour=discord.Colour.blurple(),
         )
         brand(embed)
