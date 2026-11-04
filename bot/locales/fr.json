@@ -343,5 +343,17 @@
   "dashboard.footer": "Mis à jour {updated} · rafraîchi automatiquement",
   "dashboard.posted": "Tableau de bord publié — {link}. Épingle-le pour que les organisateurs le trouvent.",
   "dashboard.refreshed": "Tableau de bord rafraîchi — {link}",
-  "dashboard.forbidden": "Je ne peux pas modifier le tableau enregistré (accès manquant). En publier un nouveau ici ?"
+  "dashboard.forbidden": "Je ne peux pas modifier le tableau enregistré (accès manquant). En publier un nouveau ici ?",
+  "event.requirements": "🔒 **Prérequis :** {values}",
+  "profile.plaync_saved": "✅ Ajouté depuis PLAYNC\\n{detail}\\n{note}",
+  "profile.pick_server": "Choisis un serveur dans la liste proposée.",
+  "profile.lookup_failed": "❌ Personnage introuvable sur PLAYNC : {error}",
+  "profile.refresh_unlinked": "Ce personnage n’est pas encore lié à PLAYNC. Utilise d’abord `/profile add`.",
+  "profile.refresh_failed": "❌ Impossible d’actualiser depuis PLAYNC : {error}",
+  "profile.refresh_success": "✅ **{name}** actualisé · {ap} AP · {gs} GS",
+  "profile.legion": "Légion",
+  "profile.plaync_link": "Profil PLAYNC",
+  "signup.require_linked_stats": "Cet événement exige un personnage lié avec des données AP/GS.",
+  "signup.min_ap": "AP minimum : {required}. **{name}** a {current} AP.",
+  "signup.min_gs": "GS minimum : {required}. **{name}** a {current} GS."
 }
