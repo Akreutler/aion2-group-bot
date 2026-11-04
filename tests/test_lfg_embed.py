@@ -33,20 +33,20 @@ def test_empty_board_shows_the_empty_hint():
 
 def test_groups_by_activity_with_counts():
     pool = [
-        entry(1, "Dungeon", "tank", 1000),
-        entry(2, "Dungeon", "dps", 1000),
+        entry(1, "Expedition", "tank", 1000),
+        entry(2, "Expedition", "dps", 1000),
         entry(3, "Raid", "heal", 1000),
     ]
     embed = build_lfg_embed(pool, [], "en", now=0)
     names = [f.name for f in embed.fields]
-    assert any("Dungeon (2)" in n for n in names)
+    assert any("Expedition (2)" in n for n in names)
     assert any("Raid (1)" in n for n in names)
 
 
 def test_expired_entries_are_not_shown():
     pool = [
-        entry(1, "Dungeon", "tank", 500),  # expired at now=1000
-        entry(2, "Dungeon", "dps", 5000),
+        entry(1, "Expedition", "tank", 500),  # expired at now=1000
+        entry(2, "Expedition", "dps", 5000),
     ]
     embed = build_lfg_embed(pool, [], "en", now=1000)
     text = board_text(embed)
@@ -61,7 +61,7 @@ def test_note_is_shown_when_present():
 
 
 def test_available_now_leads_the_board():
-    pool = [entry(1, "Dungeon", "tank", 1000)]
+    pool = [entry(1, "Expedition", "tank", 1000)]
     avail = [available(7, 1000), available(8, 1000)]
     embed = build_lfg_embed(pool, avail, "en", now=0)
     first = embed.fields[0]
