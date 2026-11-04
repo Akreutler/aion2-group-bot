@@ -6,6 +6,7 @@ whenever a character isn't named explicitly.
 """
 
 import logging
+import time
 
 import discord
 from discord import app_commands
@@ -15,6 +16,7 @@ from .. import config, i18n
 from ..branding import brand
 from ..embeds import ROLE_EMOJI, ROLE_LABEL
 from ..logic import MAX_CHARACTERS, ROLES
+from ..plaync import PlayNCClient, PlayNCError
 from ..utils.permissions import member_is_admin
 
 # The playable classes, taken from the emoji configuration so that adding one
@@ -61,6 +63,34 @@ async def character_autocomplete(interaction: discord.Interaction, current: str)
     return (await _character_choices(interaction, current))[:25]
 
 
+async def plaync_server_autocomplete(
+    interaction: discord.Interaction, current: str
+):
+    """Official EU server/race choices from PLAYNC.
+
+    The value encodes region, race and server id so the slash command does not
+    have to trust a free-text server name.
+    """
+    client = getattr(interaction.client, "plaync", None)
+    if client is None:
+        return []
+    try:
+        servers = await client.servers("eu")
+    except PlayNCError:
+        return []
+    cur = current.casefold()
+    race_label = {1: "Elyos", 2: "Asmodian"}
+    choices = []
+    for server in servers:
+        label = f"{race_label.get(server.race_id, server.race_id)} · {server.name}"
+        if cur and cur not in label.casefold():
+            continue
+        choices.append(app_commands.Choice(name=label[:100], value=server.value))
+        if len(choices) == 25:
+            break
+    return choices
+
+
 async def deletable_autocomplete(interaction: discord.Interaction, current: str):
     """Same list, with "everything" as the first entry."""
     lang = await i18n.resolve_lang(interaction.client.db, interaction.guild)
@@ -100,11 +130,19 @@ def _roster_order(entry) -> tuple:
 
 
 def character_line(row, *, star: bool = True) -> str:
-    """E.g. "⭐ 💚 **Nami** (✨ Cleric)" — star, role icon, name, class."""
+    """One compact roster/profile line, enriched when PLAYNC data is linked."""
     emoji = config.CLASS_EMOJI.get(row["char_class"])
     char_class = f"{emoji} {row['char_class']}" if emoji else row["char_class"]
     prefix = "⭐ " if star and row["is_main"] else ""
-    return f"{prefix}{ROLE_EMOJI[row['role']]} **{row['char_name']}** ({char_class})"
+    line = f"{prefix}{ROLE_EMOJI[row['role']]} **{row['char_name']}** ({char_class})"
+    if row["combat_power"] is not None or row["item_level"] is not None:
+        bits = []
+        if row["combat_power"] is not None:
+            bits.append(f"{row['combat_power']:,} CP")
+        if row["item_level"] is not None:
+            bits.append(f"{row['item_level']:,} IL")
+        line += " · " + " · ".join(bits)
+    return line
 
 
 @app_commands.guild_only()
@@ -113,6 +151,8 @@ class Profile(commands.GroupCog, name="profile"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        if not hasattr(bot, "plaync"):
+            bot.plaync = PlayNCClient()
         super().__init__()
 
     async def cog_load(self):
@@ -178,6 +218,105 @@ class Profile(commands.GroupCog, name="profile"):
         )
         await interaction.response.send_message(
             i18n.t("profile.saved", lang, detail=detail, note=note), ephemeral=True
+        )
+
+    @app_commands.command(
+        name="link", description="Register a character from the official AION 2 profile"
+    )
+    @app_commands.describe(
+        name="Exact in-game character name",
+        server="Server and faction (pick a suggestion)",
+        role="Its party role",
+        main="Make it your main character (your first one always is)",
+    )
+    @app_commands.autocomplete(server=plaync_server_autocomplete)
+    @app_commands.choices(
+        role=[
+            app_commands.Choice(name="🛡️ Tank", value="tank"),
+            app_commands.Choice(name="💚 Heal", value="heal"),
+            app_commands.Choice(name="🗡️ DPS", value="dps"),
+        ],
+    )
+    async def link(
+        self,
+        interaction: discord.Interaction,
+        name: app_commands.Range[str, 1, 32],
+        server: str,
+        role: app_commands.Choice[str],
+        main: bool = False,
+    ):
+        lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
+        characters = await self.bot.db.get_profiles(
+            interaction.guild_id, interaction.user.id
+        )
+        known = {row["char_name"].lower() for row in characters}
+        if name.strip().lower() not in known and len(characters) >= MAX_CHARACTERS:
+            await interaction.response.send_message(
+                i18n.t("profile.cap_reached", lang, max=MAX_CHARACTERS),
+                ephemeral=True,
+            )
+            return
+
+        try:
+            region, race_raw, server_raw = server.split(":", 2)
+            race_id, server_id = int(race_raw), int(server_raw)
+        except (ValueError, AttributeError):
+            await interaction.response.send_message(
+                "Pick a server from the autocomplete list.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            official = await self.bot.plaync.character(
+                name=name.strip(),
+                region=region,
+                race_id=race_id,
+                server_id=server_id,
+            )
+        except PlayNCError as exc:
+            await interaction.followup.send(
+                f"❌ Could not find that character on PLAYNC: {exc}",
+                ephemeral=True,
+            )
+            return
+
+        character_id = await self.bot.db.add_character(
+            interaction.guild_id,
+            interaction.user.id,
+            official.name,
+            official.char_class,
+            role.value,
+            make_main=main,
+        )
+        await self.bot.db.update_plaync_character(
+            character_id,
+            plaync_character_id=official.character_id,
+            region=official.region,
+            race_id=official.race_id,
+            race_name=official.race_name,
+            server_id=official.server_id,
+            server_name=official.server_name,
+            character_level=official.level,
+            combat_power=official.combat_power,
+            item_level=official.item_level,
+            title_name=official.title_name,
+            profile_image=official.profile_image,
+            updated_at=int(time.time()),
+        )
+
+        detail = (
+            f"{ROLE_EMOJI[role.value]} **{official.name}** "
+            f"({official.char_class}, {ROLE_LABEL[role.value]})\n"
+            f"{official.race_name} · {official.server_name} · Lv. {official.level}\n"
+            f"⚔️ {official.combat_power:,} CP · 🛡️ {official.item_level:,} IL"
+        )
+        was_first = not characters
+        note = i18n.t(
+            "profile.note_main" if main or was_first else "profile.note_alt", lang
+        )
+        await interaction.followup.send(
+            f"✅ Linked from PLAYNC\n{detail}\n{note}", ephemeral=True
         )
 
     @app_commands.command(
