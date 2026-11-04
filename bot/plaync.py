@@ -57,7 +57,12 @@ class Character:
     region: str
 
 
-def profile_url(character_id: str, server_id: int, region: str, lang: str = "en-us") -> str:
+def profile_url(
+    character_id: str,
+    server_id: int,
+    region: str,
+    lang: str = "en-us",
+) -> str:
     """Public PLAYNC character page for a saved character."""
     encoded = quote(character_id, safe="")
     return (
@@ -79,7 +84,9 @@ class PlayNCClient:
             "User-Agent": "Kisk-AION2-Discord-Bot/1.0",
         }
         try:
-            async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
+            async with aiohttp.ClientSession(
+                timeout=timeout, headers=headers
+            ) as session:
                 async with session.get(url, params=params) as response:
                     if response.status != 200:
                         raise PlayNCError(
