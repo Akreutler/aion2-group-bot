@@ -16,6 +16,7 @@ import discord
 from . import config, i18n
 from .embeds import ROLE_EMOJI, ROLE_LABEL, build_event_embed
 from .errors import ViewErrorMixin
+from .plaync import PlayNCError
 from .logic import (
     COMPO_STANDARD,
     MOVE_DOWN,
@@ -32,6 +33,66 @@ from .utils.permissions import member_is_admin, member_is_moderator
 from .views_common import character_option, refresh_event_message
 from .views_edit import EventEditModal
 from .views_rsvp import RSVPView as RSVPView
+
+
+async def _refresh_stale_profiles(client, db, guild_id: int, user_id: int, characters: list) -> list:
+    """Best-effort refresh of stale linked PLAYNC profiles before signup."""
+    ttl = config.PLAYNC_REFRESH_MINUTES * 60
+    if ttl <= 0 or not hasattr(client, "plaync"):
+        return characters
+    now = int(time.time())
+    changed = False
+    for row in characters:
+        if not row["plaync_character_id"] or not row["region"] or not row["server_id"]:
+            continue
+        updated = row["plaync_updated_at"] or 0
+        if now - updated < ttl:
+            continue
+        try:
+            official = await client.plaync.character_by_id(
+                character_id=row["plaync_character_id"],
+                region=row["region"],
+                server_id=row["server_id"],
+                race_id=row["race_id"] or 0,
+            )
+        except PlayNCError:
+            continue
+        await db.update_plaync_character(
+            row["id"],
+            plaync_character_id=official.character_id,
+            region=official.region,
+            race_id=official.race_id,
+            race_name=official.race_name,
+            server_id=official.server_id,
+            server_name=official.server_name,
+            character_level=official.level,
+            combat_power=official.combat_power,
+            item_level=official.item_level,
+            title_name=official.title_name,
+            profile_image=official.profile_image,
+            updated_at=now,
+        )
+        changed = True
+    return await db.get_profiles(guild_id, user_id) if changed else characters
+
+
+def _requirements_error(event, character) -> str | None:
+    """Human-readable reason a character cannot join this event."""
+    min_ap = event["min_ap"] if "min_ap" in event.keys() else None
+    min_gs = event["min_gs"] if "min_gs" in event.keys() else None
+    if not min_ap and not min_gs:
+        return None
+    if character is None:
+        return "This event requires a linked character with AP/GS data."
+    if min_ap and (character["combat_power"] is None or character["combat_power"] < min_ap):
+        current = character["combat_power"]
+        have = f"{current:,}" if current is not None else "unknown"
+        return f"Minimum AP is {min_ap:,}. **{character['char_name']}** has {have} AP."
+    if min_gs and (character["item_level"] is None or character["item_level"] < min_gs):
+        current = character["item_level"]
+        have = f"{current:,}" if current is not None else "unknown"
+        return f"Minimum GS is {min_gs:,}. **{character['char_name']}** has {have} GS."
+    return None
 
 
 class CharacterSelect(discord.ui.Select):
@@ -85,6 +146,13 @@ class CharacterPicker(ViewErrorMixin, discord.ui.View):
         if character is None:  # deleted between opening the menu and picking
             await interaction.response.edit_message(
                 content=i18n.t("signup.char_gone", lang), view=None
+            )
+            return
+
+        requirement_error = _requirements_error(self.event, character)
+        if requirement_error:
+            await interaction.response.edit_message(
+                content=f"❌ {requirement_error}", view=None
             )
             return
 
@@ -463,6 +531,9 @@ class SignupView(ViewErrorMixin, discord.ui.View):
             return
 
         characters = await db.get_profiles(event["guild_id"], interaction.user.id)
+        characters = await _refresh_stale_profiles(
+            interaction.client, db, event["guild_id"], interaction.user.id, characters
+        )
         existing = await db.get_signup(event["message_id"], interaction.user.id)
         already_in_this_role = existing is not None and existing["role"] == role
 
@@ -508,9 +579,17 @@ class SignupView(ViewErrorMixin, discord.ui.View):
             await interaction.response.send_message(intro, view=picker, ephemeral=True)
             return
 
+        character = characters[0] if characters else None
+        requirement_error = _requirements_error(event, character)
+        if requirement_error:
+            await interaction.response.send_message(
+                f"❌ {requirement_error}", ephemeral=True
+            )
+            return
+
         async with self._locks[event["message_id"]]:
             message, party_before = await self.perform_join(
-                interaction, event, role, characters[0] if characters else None, lang
+                interaction, event, role, character, lang
             )
             await interaction.response.send_message(message, ephemeral=True)
             await refresh_event_message(interaction.client, event)
