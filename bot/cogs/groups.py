@@ -39,9 +39,7 @@ VOICE_CLEANUP_GRACE = 3 * 60 * 60
 RECURRENCE_LEAD = 24 * 60 * 60
 
 
-async def event_content_autocomplete(
-    interaction: discord.Interaction, current: str
-):
+async def event_content_autocomplete(interaction: discord.Interaction, current: str):
     activity = getattr(interaction.namespace, "activity", None)
     value = getattr(activity, "value", activity)
     cur = current.casefold()
@@ -50,7 +48,6 @@ async def event_content_autocomplete(
         for name in content_choices(value)
         if not cur or cur in name.casefold()
     ][:25]
-
 
 
 @app_commands.guild_only()
