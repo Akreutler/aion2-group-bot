@@ -89,7 +89,7 @@ class Groups(commands.Cog):
     # ----- /event -----
 
     @app_commands.command(
-        name="event", description="Create a group call (dungeon, PvP...)"
+        name="event", description="Create a group call (Expedition, Sanctuary, PvP...)"
     )
     @app_commands.rename(activity="type")
     @app_commands.describe(
