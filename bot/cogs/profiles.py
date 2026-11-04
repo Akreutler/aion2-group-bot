@@ -320,6 +320,64 @@ class Profile(commands.GroupCog, name="profile"):
         )
 
     @app_commands.command(
+        name="refresh", description="Refresh a linked character from PLAYNC"
+    )
+    @app_commands.describe(character="The linked character to refresh")
+    @app_commands.autocomplete(character=character_autocomplete)
+    async def refresh(self, interaction: discord.Interaction, character: str):
+        lang = await i18n.resolve_lang(self.bot.db, interaction.guild)
+        row = await resolve_character(
+            self.bot.db, interaction.guild_id, interaction.user.id, character
+        )
+        if row is None:
+            await interaction.response.send_message(
+                i18n.t("profile.main_not_found", lang, character=character),
+                ephemeral=True,
+            )
+            return
+        if not row["plaync_character_id"] or not row["region"] or not row["server_id"]:
+            await interaction.response.send_message(
+                "This character is not linked to PLAYNC yet. Use /profile link first.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            official = await self.bot.plaync.character_by_id(
+                character_id=row["plaync_character_id"],
+                region=row["region"],
+                server_id=row["server_id"],
+                race_id=row["race_id"] or 0,
+            )
+        except PlayNCError as exc:
+            await interaction.followup.send(
+                f"❌ Could not refresh from PLAYNC: {exc}", ephemeral=True
+            )
+            return
+
+        await self.bot.db.update_plaync_character(
+            row["id"],
+            plaync_character_id=official.character_id,
+            region=official.region,
+            race_id=official.race_id,
+            race_name=official.race_name,
+            server_id=official.server_id,
+            server_name=official.server_name,
+            character_level=official.level,
+            combat_power=official.combat_power,
+            item_level=official.item_level,
+            title_name=official.title_name,
+            profile_image=official.profile_image,
+            updated_at=int(time.time()),
+        )
+        await interaction.followup.send(
+            f"✅ Refreshed **{official.name}** · "
+            f"{official.combat_power:,} CP · {official.item_level:,} IL",
+            ephemeral=True,
+        )
+
+    @app_commands.command(
         name="main", description="Choose which of your characters is your main"
     )
     @app_commands.describe(character="The character to promote")
