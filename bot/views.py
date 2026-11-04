@@ -71,6 +71,7 @@ async def _refresh_stale_profiles(client, db, guild_id: int, user_id: int, chara
             title_name=official.title_name,
             profile_image=official.profile_image,
             updated_at=now,
+            legion_name=official.legion_name,
         )
         changed = True
     return await db.get_profiles(guild_id, user_id) if changed else characters
