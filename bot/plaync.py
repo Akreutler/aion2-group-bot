@@ -11,7 +11,7 @@ import html
 import re
 import time
 from dataclasses import dataclass
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 import aiohttp
 
@@ -52,8 +52,18 @@ class Character:
     combat_power: int
     item_level: int
     title_name: str | None
+    legion_name: str | None
     profile_image: str | None
     region: str
+
+
+def profile_url(character_id: str, server_id: int, region: str, lang: str = "en-us") -> str:
+    """Public PLAYNC character page for a saved character."""
+    encoded = quote(character_id, safe="")
+    return (
+        f"https://aion2.plaync.com/{lang}/characters/{server_id}/{encoded}"
+        f"?region={region}&tab=information"
+    )
 
 
 class PlayNCClient:
@@ -182,6 +192,7 @@ class PlayNCClient:
             combat_power=int(profile.get("combatPower") or 0),
             item_level=item_level,
             title_name=profile.get("titleName"),
+            legion_name=profile.get("regionName"),
             profile_image=profile.get("profileImage"),
             region=region,
         )
