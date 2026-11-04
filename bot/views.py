@@ -77,22 +77,34 @@ async def _refresh_stale_profiles(client, db, guild_id: int, user_id: int, chara
     return await db.get_profiles(guild_id, user_id) if changed else characters
 
 
-def _requirements_error(event, character) -> str | None:
+def _requirements_error(event, character, lang: str = "en") -> str | None:
     """Human-readable reason a character cannot join this event."""
     min_ap = event["min_ap"] if "min_ap" in event.keys() else None
     min_gs = event["min_gs"] if "min_gs" in event.keys() else None
     if not min_ap and not min_gs:
         return None
     if character is None:
-        return "This event requires a linked character with AP/GS data."
+        return i18n.t("signup.require_linked_stats", lang)
     if min_ap and (character["combat_power"] is None or character["combat_power"] < min_ap):
         current = character["combat_power"]
         have = f"{current:,}" if current is not None else "unknown"
-        return f"Minimum AP is {min_ap:,}. **{character['char_name']}** has {have} AP."
+        return i18n.t(
+            "signup.min_ap",
+            lang,
+            required=f"{min_ap:,}",
+            name=character["char_name"],
+            current=have,
+        )
     if min_gs and (character["item_level"] is None or character["item_level"] < min_gs):
         current = character["item_level"]
         have = f"{current:,}" if current is not None else "unknown"
-        return f"Minimum GS is {min_gs:,}. **{character['char_name']}** has {have} GS."
+        return i18n.t(
+            "signup.min_gs",
+            lang,
+            required=f"{min_gs:,}",
+            name=character["char_name"],
+            current=have,
+        )
     return None
 
 
@@ -150,7 +162,7 @@ class CharacterPicker(ViewErrorMixin, discord.ui.View):
             )
             return
 
-        requirement_error = _requirements_error(self.event, character)
+        requirement_error = _requirements_error(self.event, character, lang)
         if requirement_error:
             await interaction.response.edit_message(
                 content=f"❌ {requirement_error}", view=None
@@ -581,7 +593,7 @@ class SignupView(ViewErrorMixin, discord.ui.View):
             return
 
         character = characters[0] if characters else None
-        requirement_error = _requirements_error(event, character)
+        requirement_error = _requirements_error(event, character, lang)
         if requirement_error:
             await interaction.response.send_message(
                 f"❌ {requirement_error}", ephemeral=True
