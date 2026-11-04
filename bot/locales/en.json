@@ -343,5 +343,17 @@
   "dashboard.footer": "Updated {updated} · refreshes automatically",
   "dashboard.posted": "Dashboard posted — {link}. Pin it so organisers find it easily.",
   "dashboard.refreshed": "Dashboard refreshed — {link}",
-  "dashboard.forbidden": "I can't edit the saved dashboard (missing access). Post a new one here?"
+  "dashboard.forbidden": "I can't edit the saved dashboard (missing access). Post a new one here?",
+  "event.requirements": "🔒 **Requirements:** {values}",
+  "profile.plaync_saved": "✅ Added from PLAYNC\\n{detail}\\n{note}",
+  "profile.pick_server": "Pick a server from the autocomplete list.",
+  "profile.lookup_failed": "❌ Could not find that character on PLAYNC: {error}",
+  "profile.refresh_unlinked": "This character is not linked to PLAYNC yet. Use `/profile add` first.",
+  "profile.refresh_failed": "❌ Could not refresh from PLAYNC: {error}",
+  "profile.refresh_success": "✅ Refreshed **{name}** · {ap} AP · {gs} GS",
+  "profile.legion": "Legion",
+  "profile.plaync_link": "PLAYNC profile",
+  "signup.require_linked_stats": "This event requires a linked character with AP/GS data.",
+  "signup.min_ap": "Minimum AP is {required}. **{name}** has {current} AP.",
+  "signup.min_gs": "Minimum GS is {required}. **{name}** has {current} GS."
 }
