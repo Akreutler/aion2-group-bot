@@ -145,7 +145,7 @@ def character_line(row, *, star: bool = True) -> str:
     return line
 
 
-def character_detail_line(row) -> str:
+def character_detail_line(row, lang: str = "en") -> str:
     """Detailed profile view for one character."""
     line = character_line(row)
     meta = []
@@ -158,14 +158,14 @@ def character_detail_line(row) -> str:
     if meta:
         line += "\n  ↳ " + " · ".join(meta)
     if row["legion_name"]:
-        line += f"\n  🛡️ Legion: **{row['legion_name']}**"
+        line += f"\n  🛡️ {i18n.t('profile.legion', lang)}: **{row['legion_name']}**"
     if row["title_name"]:
         line += f"\n  🏅 *{row['title_name']}*"
     if row["plaync_character_id"] and row["server_id"] and row["region"]:
         url = profile_url(
             row["plaync_character_id"], row["server_id"], row["region"]
         )
-        line += f"\n  🔗 [PLAYNC profile]({url})"
+        line += f"\n  🔗 [{i18n.t('profile.plaync_link', lang)}]({url})"
     return line
 
 
@@ -227,7 +227,7 @@ class Profile(commands.GroupCog, name="profile"):
             race_id, server_id = int(race_raw), int(server_raw)
         except (ValueError, AttributeError):
             await interaction.response.send_message(
-                "Pick a server from the autocomplete list.", ephemeral=True
+                i18n.t("profile.pick_server", lang), ephemeral=True
             )
             return
 
@@ -241,7 +241,7 @@ class Profile(commands.GroupCog, name="profile"):
             )
         except PlayNCError as exc:
             await interaction.followup.send(
-                f"❌ Could not find that character on PLAYNC: {exc}",
+                i18n.t("profile.lookup_failed", lang, error=exc),
                 ephemeral=True,
             )
             return
@@ -282,7 +282,7 @@ class Profile(commands.GroupCog, name="profile"):
             "profile.note_main" if main or was_first else "profile.note_alt", lang
         )
         await interaction.followup.send(
-            f"✅ Added from PLAYNC\n{detail}\n{note}", ephemeral=True
+            i18n.t("profile.plaync_saved", lang, detail=detail, note=note), ephemeral=True
         )
 
     @app_commands.command(
@@ -303,7 +303,7 @@ class Profile(commands.GroupCog, name="profile"):
             return
         if not row["plaync_character_id"] or not row["region"] or not row["server_id"]:
             await interaction.response.send_message(
-                "This character is not linked to PLAYNC yet. Use /profile add first.",
+                i18n.t("profile.refresh_unlinked", lang),
                 ephemeral=True,
             )
             return
@@ -318,7 +318,7 @@ class Profile(commands.GroupCog, name="profile"):
             )
         except PlayNCError as exc:
             await interaction.followup.send(
-                f"❌ Could not refresh from PLAYNC: {exc}", ephemeral=True
+                i18n.t("profile.refresh_failed", lang, error=exc), ephemeral=True
             )
             return
 
@@ -339,8 +339,13 @@ class Profile(commands.GroupCog, name="profile"):
             legion_name=official.legion_name,
         )
         await interaction.followup.send(
-            f"✅ Refreshed **{official.name}** · "
-            f"{official.combat_power:,} AP · {official.item_level:,} GS",
+            i18n.t(
+                "profile.refresh_success",
+                lang,
+                name=official.name,
+                ap=f"{official.combat_power:,}",
+                gs=f"{official.item_level:,}",
+            ),
             ephemeral=True,
         )
 
@@ -392,7 +397,7 @@ class Profile(commands.GroupCog, name="profile"):
         )
         embed = discord.Embed(
             title=title,
-            description="\n\n".join(character_detail_line(row) for row in characters),
+            description="\n\n".join(character_detail_line(row, lang) for row in characters),
             colour=discord.Colour.blurple(),
         )
         brand(embed)
