@@ -674,7 +674,7 @@ Open the generated installation URL and invite Kisk to your server.
 Clone the repository:
 
 ```bash
-git clone https://github.com/NaxosOne/aion2-group-bot.git
+git clone https://github.com/Akreutler/aion2-group-bot.git
 cd aion2-group-bot
 ```
 
@@ -848,7 +848,7 @@ tracked yet: run `/panel` once to register it.
 ## Language
 
 ```text
-/language choice: Français     → set the server language: Français / English / Auto (moderators)
+/language choice: Français     → set the server language: Français / English / Español / Auto (moderators)
 ```
 
 ## Roles & permissions
