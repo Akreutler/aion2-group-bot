@@ -250,12 +250,39 @@ The event creator or a moderator can cancel an event.
 
 Everyone who signed up is notified automatically.
 
-### 👤 Player profiles
+#
+## 🔎 Official PLAYNC profiles
+
+Character registration is backed by AION 2's public PLAYNC character pages.
+Use `/profile add` with the character name plus the server/faction suggestion.
+Kisk retrieves the class, level, faction, server, legion, AP and GS instead of
+asking players to type them by hand.
+
+Linked character data can be refreshed with:
+
+```
+/profile refresh
+```
+
+Kisk also refreshes stale linked profiles automatically when a player signs up
+for an event (default: after 60 minutes; configure with
+`PLAYNC_REFRESH_MINUTES`).
+
+Event organisers can optionally require a minimum AP and/or GS:
+
+```
+/event title: Progression Raid type: Raid comp: Party of 10 min_ap: 130000 min_gs: 2400
+```
+
+The requirement is checked against the specific character selected for that
+event.
+
+## 👤 Player profiles
 
 Players can register their characters with:
 
 ```text
-/profile set name: Kratos class: Templar role: Tank
+/profile add name: Kratos class: Templar role: Tank
 ```
 
 Each player can register **up to 10 characters** — a main and as many alts as
@@ -268,7 +295,7 @@ default in party lists and on the roster. To change it:
 /profile main character: Loki
 ```
 
-Re-running `/profile set` with a name that already exists updates that
+Re-running `/profile add` with a name that already exists updates that
 character instead of creating a twin, so fixing a class or a role is one
 command.
 
@@ -763,7 +790,7 @@ posted. Pinging `@everyone` is reserved to moderators.
 ## Profiles
 
 ```text
-/profile set name: Kratos class: Templar role: Tank [main: True]
+/profile add name: Kratos class: Templar role: Tank [main: True]
 /profile main character: Loki                        → change your default character
 
 /profile show [member]
@@ -1001,10 +1028,10 @@ the roster and the character picker at once.
 commented-out line away: uncomment it in `CLASS_EMOJI` the day the class
 launches and it appears everywhere on its own.
 
-`/profile set` offers exactly these classes and accepts nothing else, so a
+`/profile add` offers exactly these classes and accepts nothing else, so a
 typo can't slip into the roster. Characters registered under an older version,
 when the field was free text, keep working — they simply show no class icon.
-Re-running `/profile set` with the same character name puts them right.
+Re-running `/profile add` with the same character name puts them right.
 
 ---
 
@@ -1029,3 +1056,9 @@ Kisk should help a legion coordinate without turning the game into a second job.
 # 📄 License
 
 See [LICENSE](LICENSE).
+
+
+## 🌍 Languages
+
+Kisk supports English, French and Spanish. Server administrators can choose
+with `/language`; Auto follows the Discord server locale when supported.
