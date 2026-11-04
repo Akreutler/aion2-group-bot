@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS events (
     voice_channel_id INTEGER,                      -- its channel, NULL once cleaned up
     groups        INTEGER NOT NULL DEFAULT 1,      -- display groups; 1 = single party
     min_ap        INTEGER,
-    min_gs        INTEGER
+    min_gs        INTEGER,
+    mode          TEXT,
+    content       TEXT,
+    difficulty    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS signups (
@@ -174,7 +177,10 @@ CREATE TABLE IF NOT EXISTS recurrences (
     active        INTEGER NOT NULL DEFAULT 1,
     groups        INTEGER NOT NULL DEFAULT 1,      -- siege display groups; 1 = single
     min_ap        INTEGER,
-    min_gs        INTEGER
+    min_gs        INTEGER,
+    mode          TEXT,
+    content       TEXT,
+    difficulty    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -266,11 +272,17 @@ class Database(ProfilesMixin, BoardsMixin):
                 "groups": "INTEGER NOT NULL DEFAULT 1",
                 "min_ap": "INTEGER",
                 "min_gs": "INTEGER",
+                "mode": "TEXT",
+                "content": "TEXT",
+                "difficulty": "TEXT",
             },
             "recurrences": {
                 "groups": "INTEGER NOT NULL DEFAULT 1",  # siege split, threaded
                 "min_ap": "INTEGER",
                 "min_gs": "INTEGER",
+                "mode": "TEXT",
+                "content": "TEXT",
+                "difficulty": "TEXT",
             },
         }
         for table, columns in added.items():
