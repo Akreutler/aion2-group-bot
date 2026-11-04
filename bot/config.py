@@ -27,6 +27,10 @@ REMINDER_MINUTES = int(os.getenv("REMINDER_MINUTES") or 15)
 # How many minutes before start the "are you coming?" RSVP prompt is posted.
 RSVP_MINUTES = int(os.getenv("RSVP_MINUTES") or 60)
 
+# Refresh linked PLAYNC character data on signup when older than this.
+# Set to 0 to disable automatic refreshes.
+PLAYNC_REFRESH_MINUTES = int(os.getenv("PLAYNC_REFRESH_MINUTES") or 60)
+
 # How many hours after an event is over its message is deleted from the channel,
 # so past events don't pile up. Set to 0 to disable the cleanup entirely.
 EVENT_CLEANUP_HOURS = int(os.getenv("EVENT_CLEANUP_HOURS") or 24)
