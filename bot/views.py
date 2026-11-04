@@ -608,9 +608,7 @@ class SignupView(ViewErrorMixin, discord.ui.View):
         character = characters[0] if characters else None
         requirement_error = _requirements_error(event, character, lang)
         if requirement_error:
-            await interaction.followup.send(
-                f"❌ {requirement_error}", ephemeral=True
-            )
+            await interaction.followup.send(f"❌ {requirement_error}", ephemeral=True)
             return
 
         async with self._locks[event["message_id"]]:
