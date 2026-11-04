@@ -152,6 +152,7 @@ class ProfilesMixin:
         title_name: str | None,
         profile_image: str | None,
         updated_at: int,
+        legion_name: str | None = None,
     ) -> None:
         """Stores the latest public PLAYNC metadata for a registered character."""
         await self.conn.execute(
@@ -166,6 +167,7 @@ class ProfilesMixin:
                    combat_power = ?,
                    item_level = ?,
                    title_name = ?,
+                   legion_name = ?,
                    profile_image = ?,
                    plaync_updated_at = ?
                WHERE id = ?""",
@@ -180,6 +182,7 @@ class ProfilesMixin:
                 combat_power,
                 item_level,
                 title_name,
+                legion_name,
                 profile_image,
                 updated_at,
                 character_id,
