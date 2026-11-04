@@ -16,7 +16,6 @@ import discord
 from . import config, i18n
 from .embeds import ROLE_EMOJI, ROLE_LABEL, build_event_embed
 from .errors import ViewErrorMixin
-from .plaync import PlayNCError
 from .logic import (
     COMPO_STANDARD,
     MOVE_DOWN,
@@ -26,6 +25,7 @@ from .logic import (
     reorder_priorities,
     signup_priority,
 )
+from .plaync import PlayNCError
 from .utils.ics import build_calendar
 from .utils.lfg import matching_pool
 from .utils.mentions import join_mentions
@@ -35,7 +35,13 @@ from .views_edit import EventEditModal
 from .views_rsvp import RSVPView as RSVPView
 
 
-async def _refresh_stale_profiles(client, db, guild_id: int, user_id: int, characters: list) -> list:
+async def _refresh_stale_profiles(
+    client,
+    db,
+    guild_id: int,
+    user_id: int,
+    characters: list,
+) -> list:
     """Best-effort refresh of stale linked PLAYNC profiles before signup."""
     ttl = config.PLAYNC_REFRESH_MINUTES * 60
     if ttl <= 0 or not hasattr(client, "plaync"):
@@ -85,7 +91,9 @@ def _requirements_error(event, character, lang: str = "en") -> str | None:
         return None
     if character is None:
         return i18n.t("signup.require_linked_stats", lang)
-    if min_ap and (character["combat_power"] is None or character["combat_power"] < min_ap):
+    if min_ap and (
+        character["combat_power"] is None or character["combat_power"] < min_ap
+    ):
         current = character["combat_power"]
         have = f"{current:,}" if current is not None else "unknown"
         return i18n.t(
@@ -95,7 +103,9 @@ def _requirements_error(event, character, lang: str = "en") -> str | None:
             name=character["char_name"],
             current=have,
         )
-    if min_gs and (character["item_level"] is None or character["item_level"] < min_gs):
+    if min_gs and (
+        character["item_level"] is None or character["item_level"] < min_gs
+    ):
         current = character["item_level"]
         have = f"{current:,}" if current is not None else "unknown"
         return i18n.t(
