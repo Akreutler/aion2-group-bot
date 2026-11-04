@@ -53,13 +53,36 @@ Like the in-game kisk, it's the **rally point you drop before the fight.**
   * description
 * Supported activity types:
 
-  * 🏰 Dungeon
+  * 🏰 Expedition
+  * 🔥 Sanctuary
+  * 🔮 Transcendence
   * 🐉 Raid
   * 🚩 Battleground
   * ⚔️ PvP
   * 🌀 Rift
   * 🌌 Abyss
   * 🎲 Other
+
+### 🔮 Structured PvE content
+
+Kisk models AION 2 PvE content explicitly instead of forcing the instance name
+into the event title.
+
+**Expedition**
+- Exploration: Krao Cave, Draupnir, Uruguru Canyon, Vakron Sky Island,
+  Fire Temple and Ferocious Horn Den. No difficulty.
+- Conquest: the same six instances, with Normal / Hard difficulty.
+
+**Sanctuary**
+- Abyssal Forge: Ludra, with Normal / Hard difficulty.
+
+**Transcendence**
+- Deus Research Base
+- Shattered Arkanis
+- Stage 1 / 2 / 3 / 4
+
+The selected instance becomes the event title automatically unless a custom
+title is supplied.
 
 ### 👥 Party compositions
 
