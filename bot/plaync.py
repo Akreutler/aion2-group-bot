@@ -11,6 +11,7 @@ import html
 import re
 import time
 from dataclasses import dataclass
+from urllib.parse import unquote
 
 import aiohttp
 
@@ -134,9 +135,9 @@ class PlayNCClient:
             if clean_name.casefold() == wanted:
                 character_id = row.get("characterId")
                 if character_id:
-                    # Search returns the id URL-encoded while /info accepts the
-                    # encoded form directly as a query parameter value.
-                    return str(character_id), clean_name
+                    # Search returns the id URL-encoded (%3D). aiohttp encodes
+                    # query values itself, so decode it first to avoid %253D.
+                    return unquote(str(character_id)), clean_name
         raise PlayNCError(f"Character {name!r} was not found on that server")
 
     async def character(
