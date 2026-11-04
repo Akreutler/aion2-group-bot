@@ -55,6 +55,7 @@ EMOJI_DPS = _emoji(os.getenv("EMOJI_DPS"), "🗡️", "EMOJI_DPS")
 DEFAULT_EMOJI_ACTIVITY = {
     "Expedition": "🏰",
     "Sanctuary": "🔥",
+    "Transcendence": "🔮",
     "Raid": "🐉",
     "Battleground": "🚩",
     "PvP": "⚔️",
@@ -88,6 +89,11 @@ EXPEDITION_CONTENT = (
 EXPEDITION_MODES = ("Exploration", "Conquest")
 DIFFICULTIES = ("Normal", "Hard")
 SANCTUARY_CONTENT = ("Abyssal Forge: Ludra",)
+TRANSCENDENCE_CONTENT = (
+    "Deus Research Base",
+    "Shattered Arkanis",
+)
+TRANSCENDENCE_STAGES = (1, 2, 3, 4)
 
 
 # Aion 2 class emojis, overridable the same way (EMOJI_GLADIATOR, EMOJI_TEMPLAR
