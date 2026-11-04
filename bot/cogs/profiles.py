@@ -399,7 +399,9 @@ class Profile(commands.GroupCog, name="profile"):
         )
         embed = discord.Embed(
             title=title,
-            description="\n\n".join(character_detail_line(row, lang) for row in characters),
+            description="\n\n".join(
+                character_detail_line(row, lang) for row in characters
+            ),
             colour=discord.Colour.blurple(),
         )
         brand(embed)
