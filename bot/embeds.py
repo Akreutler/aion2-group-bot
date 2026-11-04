@@ -143,6 +143,15 @@ def build_event_embed(
     if event["starts_at"]:
         header += f" • 🕘 <t:{event['starts_at']}:F> (<t:{event['starts_at']}:R>)"
     lines = [header]
+    requirements = []
+    min_ap = _row_get(event, "min_ap")
+    min_gs = _row_get(event, "min_gs")
+    if min_ap:
+        requirements.append(f"{min_ap:,} AP")
+    if min_gs:
+        requirements.append(f"{min_gs:,} GS")
+    if requirements:
+        lines.append("🔒 **Requirements:** " + " · ".join(requirements))
     if event["description"]:
         lines.append(event["description"])
 
