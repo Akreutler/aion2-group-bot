@@ -40,7 +40,12 @@ RECURRENCE_LEAD = 24 * 60 * 60
 
 
 async def event_content_autocomplete(interaction: discord.Interaction, current: str):
+    # With @app_commands.rename(activity="type"), Discord's namespace may expose
+    # either the Python name or the displayed option name depending on the
+    # autocomplete interaction. Accept both so content suggestions stay robust.
     activity = getattr(interaction.namespace, "activity", None)
+    if activity is None:
+        activity = getattr(interaction.namespace, "type", None)
     value = getattr(activity, "value", activity)
     cur = current.casefold()
     return [
