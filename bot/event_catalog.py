@@ -24,6 +24,8 @@ def content_choices(activity: str | None) -> tuple[str, ...]:
         return config.EXPEDITION_CONTENT
     if activity == "Sanctuary":
         return config.SANCTUARY_CONTENT
+    if activity == "Transcendence":
+        return config.TRANSCENDENCE_CONTENT
     return ()
 
 
@@ -49,7 +51,10 @@ def normalize_event_details(
     """Validate and normalize structured event metadata."""
     mode = _canonical(mode, config.EXPEDITION_MODES)
     content = _canonical(
-        content, config.EXPEDITION_CONTENT + config.SANCTUARY_CONTENT
+        content,
+        config.EXPEDITION_CONTENT
+        + config.SANCTUARY_CONTENT
+        + config.TRANSCENDENCE_CONTENT,
     )
     difficulty = _canonical(difficulty, config.DIFFICULTIES)
 
@@ -74,6 +79,15 @@ def normalize_event_details(
         if difficulty not in config.DIFFICULTIES:
             raise EventCatalogError("Sanctuary requires Normal or Hard.")
         return None, content, difficulty
+
+    if activity == "Transcendence":
+        if mode is not None or difficulty is not None:
+            raise EventCatalogError(
+                "Transcendence uses Stages, not Expedition mode or Normal/Hard."
+            )
+        if content not in config.TRANSCENDENCE_CONTENT:
+            raise EventCatalogError("Pick a valid Transcendence dungeon.")
+        return None, content, None
 
     if mode or content or difficulty:
         raise EventCatalogError(
