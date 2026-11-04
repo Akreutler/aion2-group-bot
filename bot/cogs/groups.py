@@ -10,7 +10,7 @@ from discord.ext import commands, tasks
 from .. import config, i18n
 from ..actions import post_event, publish_event, resolve_channel
 from ..branding import brand
-from ..embeds import PRESENCE_ACTIVITY_EMOJI, build_rsvp_embed
+from ..embeds import build_rsvp_embed
 from ..errors import resilient_tick
 from ..logic import COMPO_OPEN, COMPO_STANDARD, assign
 from ..utils.mentions import join_mentions, ping_permitted
