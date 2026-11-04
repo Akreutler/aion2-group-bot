@@ -14,7 +14,7 @@ from . import config
 # Bump when the artwork changes: the asset URLs are otherwise stable, so a
 # changed image would keep serving from Discord's image cache until it expires.
 # The `?v=` below makes Discord treat a new version as a fresh URL and refetch.
-ASSET_VERSION = "2"
+ASSET_VERSION = "3"
 
 
 def asset_url(name: str) -> str:
